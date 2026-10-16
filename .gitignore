@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.healops/
+# stray probe data created by tools that mis-handled Windows paths
+/C/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store

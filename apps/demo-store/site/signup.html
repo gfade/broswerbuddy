@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Newsletter | LOL Store</title>
+    <link rel="stylesheet" href="css/store.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>LOL Store</a>
+      <nav class="nav" aria-label="Main">
+        <a href="index.html">Shop</a>
+        <a href="signup.html" aria-current="page">Newsletter</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="narrow">
+        <section class="signup-card" aria-labelledby="signup-title">
+          <p class="eyebrow">Newsletter</p>
+          <h1 id="signup-title">Get the drop first</h1>
+          <p class="lede">Early access to new drops and 20% off your first order.</p>
+
+          <form class="signup-form" data-testid="signup-form" novalidate>
+            <label class="field-label" for="signup-email">Email address</label>
+            <div class="signup-row">
+              <input id="signup-email" name="email" type="email" data-testid="signup-email" placeholder="you@example.com" autocomplete="email" required aria-describedby="signup-error" />
+              <button type="submit" class="btn" data-testid="signup-submit">Sign me up</button>
+            </div>
+            <p class="error" id="signup-error" data-testid="signup-error" role="alert" hidden>Please enter a valid email address, like you@example.com.</p>
+          </form>
+
+          <div class="success" data-testid="signup-success" role="status" hidden>
+            <h2>You're in!</h2>
+            <p>Watch your inbox for the next drop.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>LOL Store demo storefront &middot; <span id="version">v1.4.2</span></p>
+    </footer>
+    <script type="module" src="js/signup.js"></script>
+    <!--HEALOPS_WIDGET-->
+  </body>
+</html>

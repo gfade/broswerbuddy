@@ -1,0 +1,36 @@
+{
+  "name": "healops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HealOps: a self-healing QA engineer. Finds bugs in a web app and fixes them on its own.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n server,dashboard -c magenta,cyan \"npm:dev:server\" \"npm:dev:dashboard\"",
+    "dev:server": "tsx watch --clear-screen=false apps/server/src/main.ts",
+    "dev:dashboard": "npm run dev -w @healops/dashboard",
+    "start": "npm run build && tsx apps/server/src/main.ts",
+    "build": "npm run build -w @healops/widget && npm run build -w @healops/dashboard",
+    "typecheck": "tsc -p tsconfig.json",
+    "doctor": "tsx scripts/doctor.ts",
+    "import-apis": "node scripts/import-apis.mjs",
+    "tunnel": "node scripts/tunnel.mjs",
+    "browsers": "playwright-core install chromium"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-bedrock": "^3.1152.0",
+    "@types/node": "latest",
+    "@types/ws": "latest",
+    "concurrently": "latest",
+    "esbuild": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

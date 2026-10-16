@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HealOps Backend Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="figma.css">
+<link rel="stylesheet" href="product.css">
+<style>
+.frame{background:#0b0e15;background-image:radial-gradient(#ffffff08 1px,transparent 1px);background-size:20px 20px}
+.ftitle{position:absolute;left:40px;top:28px}
+.ftitle .h2{font-size:26px}
+.zone{position:absolute;border:1.5px dashed #ffffff26;border-radius:18px;background:#ffffff04}
+.zone>.zl{position:absolute;left:16px;top:-11px;background:#0b0e15;padding:0 8px;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--zc,#8a95ab)}
+.bx{position:absolute;width:var(--w,260px);background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--c,#5d6780);border-radius:12px;padding:12px 14px;z-index:1;transition:box-shadow .3s,transform .3s}
+.bx .ic{font-size:18px;margin-right:4px}
+.bx b{font-size:15px}
+.bx .t{font:11.5px var(--mono);color:var(--muted);margin-top:3px}
+.bx .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.bx .tags span{font:600 10px var(--mono);padding:2px 6px;border-radius:5px;background:var(--panel2);color:var(--muted)}
+.bx.lit{box-shadow:0 0 0 2px var(--c),0 0 36px color-mix(in srgb,var(--c) 55%,transparent);transform:translateY(-2px)}
+.st{position:absolute;width:190px;padding:12px 14px;border-radius:14px;background:var(--panel);border:1.5px solid color-mix(in srgb,var(--c) 60%,transparent);z-index:1;transition:.3s}
+.st b{display:block;font:700 14px var(--mono);letter-spacing:.04em;color:var(--c)}
+.st span{font-size:12px;color:var(--muted)}
+.st code{display:block;font:11px var(--mono);color:#c9d3e6;margin-top:6px}
+.st.lit{background:color-mix(in srgb,var(--c) 18%,var(--panel));box-shadow:0 0 30px color-mix(in srgb,var(--c) 50%,transparent);transform:scale(1.04)}
+.st.fail{--c:var(--bad);border-style:dashed}
+.lane-h{position:absolute;top:110px;width:170px;transform:translateX(-50%);text-align:center;padding:10px;border-radius:10px;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--c);font-weight:700;font-size:13px;z-index:2}
+.lane-h span{display:block;font:500 10.5px var(--mono);color:var(--muted)}
+.lane-l{position:absolute;top:160px;bottom:30px;width:0;border-left:1.5px dashed #ffffff22}
+.msg{position:absolute;height:0;border-top:2px solid var(--c);transition:.25s;opacity:.85}
+.msg::after{content:"";position:absolute;top:-6px;border:5px solid transparent}
+.msg.r::after{right:-2px;border-left:8px solid var(--c);border-right:0}
+.msg.l::after{left:-2px;border-right:8px solid var(--c);border-left:0}
+.msg.ret{border-top-style:dashed}
+.msg em{position:absolute;left:0;right:0;bottom:4px;text-align:center;font:500 11.5px var(--mono);font-style:normal;color:#c9d3e6;white-space:nowrap}
+.msg i{position:absolute;left:-36px;top:-9px;font:600 10px var(--mono);font-style:normal;color:var(--dim)}
+.msg.r i{left:-34px}.msg.l i{left:auto;right:-34px}
+.msg.lit{opacity:1;filter:drop-shadow(0 0 6px var(--c))}
+.msg.lit em{color:#fff;font-weight:700}
+.self{position:absolute;border:2px solid var(--c);border-left:0;border-radius:0 8px 8px 0;width:30px;height:22px}
+.self em{position:absolute;left:38px;top:2px;font:500 11.5px var(--mono);font-style:normal;color:#c9d3e6;white-space:nowrap}
+.tbl{position:absolute;width:260px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;z-index:1;font:12px var(--mono)}
+.tbl h6{font:700 13px var(--mono);padding:9px 12px;background:color-mix(in srgb,var(--c) 18%,var(--panel));border-bottom:1px solid var(--line);color:var(--c);display:flex;justify-content:space-between}
+.tbl h6 span{color:var(--muted);font-weight:500;font-size:10.5px}
+.tbl div{display:flex;justify-content:space-between;padding:4px 12px;border-bottom:1px solid #ffffff08}
+.tbl div span:last-child{color:var(--muted)}
+.tbl div.k span:first-child{color:#ffcb6b}
+.tbl div.e span:first-child{color:#ff79c6}
+.method{font:700 11px var(--mono);padding:2px 7px;border-radius:5px}
+.m-get{background:#3ea6ff22;color:#3ea6ff}.m-post{background:#2fd58a22;color:#2fd58a}.m-ws{background:#8f6bff22;color:#b39dff}.m-del{background:#ff547022;color:#ff5470}
+.tree{font:13px/1.75 var(--mono);color:#c9d3e6;white-space:pre}
+.tree .d{color:#82aaff}.tree .n{color:#5d6780}.tree .sp{font-weight:700}
+.span-row{display:grid;grid-template-columns:270px 1fr 70px;align-items:center;gap:12px;font:12px var(--mono);padding:5px 0;border-bottom:1px solid #ffffff08}
+.span-row .bar{height:12px;position:relative;background:transparent}
+.span-row .bar i{position:absolute;height:100%;border-radius:4px;left:var(--l);width:var(--w)}
+.az{position:absolute;border:1.5px dashed #ff990055;border-radius:14px;background:#ff99000a}
+.task{position:absolute;width:150px;padding:8px 10px;border-radius:10px;font:600 12px var(--mono);z-index:1;transition:.5s}
+.task.blue{background:#3ea6ff1f;border:1px solid #3ea6ff88;color:#9fd2ff}
+.task.green{background:#2fd58a1f;border:1px solid #2fd58a88;color:#9af0c6}
+.weight{font:800 30px var(--mono);transition:.4s}
+.gantt{display:grid;grid-template-columns:160px repeat(24,1fr);gap:0;font:11px var(--mono)}
+.gantt .h{color:var(--dim);text-align:center;border-left:1px solid #ffffff0c;padding-bottom:6px}
+.gantt .lane{color:var(--text);font:600 13px Inter;padding:10px 0;border-top:1px solid var(--line)}
+.gantt .cell{border-top:1px solid var(--line);border-left:1px solid #ffffff0c;position:relative;height:56px}
+.blk{position:absolute;top:10px;height:36px;border-radius:8px;padding:4px 8px;font:600 11px Inter;color:#0a0d14;overflow:hidden;white-space:nowrap;z-index:1}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <div class="tb-logo"><i></i>HealOps</div>
+    <div class="tb-file">Drafts / <b>Self-Healing QA · Backend</b></div>
+    <div class="tb-sep"></div>
+    <div class="tb-tabs"><a href="frontend.html">Frontend</a><a class="on" href="backend.html">Backend</a></div>
+    <div class="tb-spacer"></div>
+    <button class="tb-btn on" id="pinBtn" title="Toggle comments (C)">💬 Comments</button>
+    <button class="tb-btn" id="fitBtn" title="Zoom to fit (1)">⤢ Fit</button>
+    <span class="tb-btn tb-zoom" id="zoomLbl">100%</span>
+    <button class="tb-btn" id="playBtn" title="Play animations (P)">▶ Play</button>
+  </div>
+  <aside id="layers"><div class="pan-h">Layers <span>Page 1</span></div><div id="layerList"></div></aside>
+  <main id="viewport">
+    <div id="world">
+
+<div class="section-label" style="left:0;top:-110px">① System architecture</div>
+<div class="section-label" style="left:0;top:1290px">② Agent behaviour: states and the incident sequence</div>
+<div class="section-label" style="left:0;top:2490px">③ Data model and contracts</div>
+<div class="section-label" style="left:0;top:3690px">④ Code · telemetry · infrastructure</div>
+<div class="section-label" style="left:0;top:4890px">⑤ Safety and delivery</div>
+
+<!-- ===================== B00 ARCHITECTURE ===================== -->
+<div class="frame" id="arch" data-name="B00 · System Architecture" style="left:0;top:0;width:2000px;height:1200px">
+  <div class="ftitle"><div class="h2">System architecture</div><div class="sm muted">TypeScript end to end · AWS control plane · all five sponsors on the critical path · press P to watch an incident flow through</div></div>
+
+  <div class="zone" style="left:30px;top:120px;width:320px;height:1040px;--zc:#7c5cff"><span class="zl">Clients</span></div>
+  <div class="zone" style="left:400px;top:120px;width:790px;height:1040px;--zc:#ff9900"><span class="zl">HealOps control plane · AWS account</span></div>
+  <div class="zone" style="left:1240px;top:120px;width:410px;height:1040px;--zc:#e8edf6"><span class="zl">Sponsor services</span></div>
+  <div class="zone" style="left:1700px;top:120px;width:270px;height:1040px;--zc:#ffb547"><span class="zl">Customer app + repo</span></div>
+
+  <div class="bx" id="a-dash" style="left:60px;top:170px;--c:var(--accent)" data-spec="Dashboard" data-note="Next.js app (apps/dashboard). Subscribes to the realtime gateway for incident events and embeds the Anchor live-view iframe."><b><span class="ic">🖥</span>HealOps Dashboard</b><div class="t">Next.js · mission control UI</div><div class="tags"><span>TS</span><span>React</span><span>CloudFront</span></div></div>
+  <div class="bx" id="a-widget" style="left:60px;top:400px;--c:var(--warn)" data-spec="Flag widget" data-note="healops.js, about 6kb. Captures the last 50 DOM events and console errors, then POSTs to /v1/flags."><b><span class="ic">🐞</span>Flag widget</b><div class="t">script tag on customer site</div><div class="tags"><span>TS</span><span>no deps</span></div></div>
+  <div class="bx" id="a-slack" style="left:60px;top:630px;--c:#8a95ab" data-spec="Alerts channel"><b><span class="ic">🔔</span>Slack / email</b><div class="t">escalations + approvals</div></div>
+
+  <div class="bx" id="a-api" style="left:440px;top:170px;--c:var(--aws)" data-spec="API service" data-note="apps/api, Fastify on ECS Fargate. Zod-validated routes. Writes jobs to SQS and never calls sponsors directly."><b><span class="ic">⚡</span>API · Fastify</b><div class="t">REST · auth · validation</div><div class="tags"><span>ECS Fargate</span><span>zod</span></div></div>
+  <div class="bx" id="a-ws" style="left:440px;top:400px;--c:var(--aws)" data-spec="Realtime gateway"><b><span class="ic">📡</span>Realtime gateway</b><div class="t">API Gateway WebSocket</div><div class="tags"><span>incident events</span></div></div>
+  <div class="bx" id="a-sched" style="left:440px;top:630px;--c:var(--aws)" data-spec="Scheduler"><b><span class="ic">⏱</span>EventBridge Scheduler</b><div class="t">patrol tick every 5 min / flow</div></div>
+  <div class="bx" id="a-sqs" style="left:880px;top:170px;--c:var(--aws)" data-spec="Job queue"><b><span class="ic">📨</span>SQS · jobs</b><div class="t">flow-run · incident · eval</div><div class="tags"><span>DLQ</span><span>FIFO per incident</span></div></div>
+  <div class="bx" id="a-orch" style="left:760px;top:380px;--w:400px;--c:var(--accent);padding:16px" data-spec="Agent Orchestrator" data-pin="This is the brain. It's a plain TypeScript state machine, so every transition is one OpenTelemetry span and one SurrealDB write, which makes the whole run replayable." data-note="packages/agent. Each incident is one durable state machine. Sponsor calls go through adapters in packages/sponsors/*.">
+    <b style="font-size:17px"><span class="ic">🧠</span>Agent Orchestrator</b><div class="t">packages/agent · durable state machine · ECS worker</div>
+    <div class="tags" style="margin-top:12px"><span style="color:var(--anchor)">DETECT</span><span style="color:var(--warn)">TRIAGE</span><span style="color:var(--surreal)">RECALL</span><span style="color:var(--daytona)">REPRODUCE</span><span style="color:var(--aws)">PATCH</span><span style="color:var(--daytona)">VERIFY</span><span style="color:var(--info)">GATE</span><span style="color:var(--aws)">DEPLOY</span><span style="color:var(--arize)">JUDGE</span><span style="color:var(--surreal)">LEARN</span></div>
+  </div>
+  <div class="bx" id="a-s3" style="left:760px;top:660px;--w:190px;--c:var(--aws)" data-spec="Artifact store"><b><span class="ic">🗄</span>S3 artifacts</b><div class="t">screens · trace.zip · diffs</div></div>
+  <div class="bx" id="a-sec" style="left:970px;top:660px;--w:190px;--c:var(--aws)" data-spec="Secrets Manager" data-note="Each adapter gets its own scoped secret. Daytona sandboxes never receive production credentials."><b><span class="ic">🔐</span>Secrets Manager</b><div class="t">scoped per adapter</div></div>
+  <div class="bx" id="a-deploy" style="left:760px;top:860px;--w:190px;--c:var(--aws)" data-spec="Deployer"><b><span class="ic">🚀</span>Deployer</b><div class="t">CodeDeploy canary</div><div class="tags"><span>5→25→100%</span></div></div>
+  <div class="bx" id="a-rb" style="left:970px;top:860px;--w:190px;--c:var(--bad)" data-spec="Rollback Lambda"><b><span class="ic">↶</span>Rollback Lambda</b><div class="t">alarm → revert &lt; 30s</div></div>
+
+  <div class="bx" id="a-anchor" style="left:1280px;top:170px;--w:330px;--c:var(--anchor)" data-spec="Anchor Browser" data-sponsor="anchor" data-note="sessions.create() → CDP URL → Playwright connectOverCDP runs the recorded flow. live_view_url goes to the dashboard iframe. Recordings are copied to S3."><b><span class="ic">🌐</span>Anchor Browser</b><div class="t">cloud browsers · live view · recording</div><div class="tags"><span>sessions.create</span><span>CDP</span><span>Playwright</span></div></div>
+  <div class="bx" id="a-surreal" style="left:1280px;top:350px;--w:330px;--c:var(--surreal)" data-spec="SurrealDB" data-sponsor="surreal" data-note="Graph (RELATE edges) + vector index (HNSW on error embeddings) + LIVE SELECT pushes to the dashboard. A single store for agent memory."><b><span class="ic">🕸</span>SurrealDB Cloud</b><div class="t">graph + vector memory · LIVE queries</div><div class="tags"><span>RELATE</span><span>HNSW</span><span>LIVE SELECT</span></div></div>
+  <div class="bx" id="a-daytona" style="left:1280px;top:530px;--w:330px;--c:var(--daytona)" data-spec="Daytona" data-sponsor="daytona" data-note="One sandbox per incident: git clone @sha → npm ci → playwright test. Used twice, to reproduce (expect red) and to verify (expect green). Auto-stops after 15 min."><b><span class="ic">📦</span>Daytona</b><div class="t">ephemeral sandboxes · repro + verify</div><div class="tags"><span>create()</span><span>git.clone</span><span>process.executeCommand</span></div></div>
+  <div class="bx" id="a-bedrock" style="left:1280px;top:710px;--w:330px;--c:var(--aws)" data-spec="AWS Bedrock" data-sponsor="aws" data-note="ConverseStream for reasoning + patch generation (streamed to the dashboard). ApplyGuardrail screens all untrusted text. Embeddings model for the error signatures stored in SurrealDB."><b><span class="ic">🤖</span>AWS Bedrock</b><div class="t">Claude · ConverseStream · Guardrails · embeddings</div><div class="tags"><span>Converse</span><span>ApplyGuardrail</span><span>Titan embed</span></div></div>
+  <div class="bx" id="a-arize" style="left:1280px;top:890px;--w:330px;--c:var(--arize)" data-spec="Arize" data-sponsor="arize" data-note="OpenTelemetry exporter on the orchestrator. One trace per incident and one span per state. LLM-as-judge evals run on finished traces, and scores come back to SurrealDB."><b><span class="ic">📈</span>Arize</b><div class="t">OTel traces · LLM evals · dashboards</div><div class="tags"><span>OpenInference</span><span>evals</span></div></div>
+
+  <div class="bx" id="a-app" style="left:1720px;top:170px;--w:230px;--c:var(--warn)" data-spec="Customer app"><b><span class="ic">🛒</span>www.lol.com</b><div class="t">ECS Fargate · 3 AZs</div><div class="tags"><span>blue/green</span></div></div>
+  <div class="bx" id="a-cw" style="left:1720px;top:420px;--w:230px;--c:var(--aws)" data-spec="CloudWatch"><b><span class="ic">📊</span>CloudWatch</b><div class="t">p95 · 5xx · per-AZ alarms</div></div>
+  <div class="bx" id="a-gh" style="left:1720px;top:700px;--w:230px;--c:#c9d3e6" data-spec="GitHub repo"><b><span class="ic">🐙</span>GitHub repo</b><div class="t">source · branches · PRs</div></div>
+
+  <div class="panel abs" style="left:1720px;top:900px;width:230px;padding:12px" data-spec="Legend">
+    <div class="cap" style="margin-bottom:8px">Legend</div>
+    <div class="col xs" style="gap:6px"><span><b style="color:#7c5cff">━</b> control flow</span><span><b style="color:#ff5470">┅</b> failure / rollback</span><span><b style="color:#8a95ab">━</b> data / telemetry</span><span class="muted">● packet = one incident moving through</span></div>
+  </div>
+</div>
+
+<!-- ===================== B01 STATE MACHINE ===================== -->
+<div class="frame" id="sm" data-name="B01 · Agent State Machine" style="left:0;top:1400px;width:1520px;height:800px">
+  <div class="ftitle"><div class="h2">Agent state machine</div><div class="sm muted">One durable instance per incident · every transition = 1 OTel span + 1 SurrealDB write · dashed = failure path</div></div>
+  <div class="st" id="s-detect" style="left:50px;top:150px;--c:var(--anchor)" data-spec="DETECT"><b>DETECT</b><span>flow fails or user flags</span><code>runFlow() · Anchor</code></div>
+  <div class="st" id="s-triage" style="left:290px;top:150px;--c:var(--warn)" data-spec="TRIAGE"><b>TRIAGE</b><span>screen + classify + dedupe</span><code>screen() · Guardrails</code></div>
+  <div class="st" id="s-recall" style="left:530px;top:150px;--c:var(--surreal)" data-spec="RECALL"><b>RECALL</b><span>similar bugs + past fixes</span><code>memory.similar() · Surreal</code></div>
+  <div class="st" id="s-repro" style="left:770px;top:150px;--c:var(--daytona)" data-spec="REPRODUCE"><b>REPRODUCE</b><span>must fail in sandbox</span><code>sandbox.run() · Daytona</code></div>
+  <div class="st" id="s-patch" style="left:1010px;top:150px;--c:var(--aws)" data-spec="PATCH"><b>PATCH</b><span>reason + write diff</span><code>proposeFix() · Bedrock</code></div>
+  <div class="st" id="s-verify" style="left:1270px;top:300px;--c:var(--daytona)" data-spec="VERIFY"><b>VERIFY</b><span>full suite must pass</span><code>sandbox.test() · Daytona</code></div>
+  <div class="st" id="s-gate" style="left:1010px;top:450px;--c:var(--info)" data-spec="GATE" data-pin="The policy gate: risk score vs. the autonomy setting. Above the threshold, a human approves via Slack or the dashboard."><b>GATE</b><span>risk vs autonomy policy</span><code>policy.allow() · Arize pre-score</code></div>
+  <div class="st" id="s-deploy" style="left:770px;top:450px;--c:var(--aws)" data-spec="DEPLOY"><b>DEPLOY</b><span>canary 5→25→100%</span><code>deployer.canary() · AWS</code></div>
+  <div class="st" id="s-judge" style="left:530px;top:450px;--c:var(--arize)" data-spec="JUDGE"><b>JUDGE</b><span>LLM-as-judge on trace</span><code>evals.run() · Arize</code></div>
+  <div class="st" id="s-learn" style="left:290px;top:450px;--c:var(--surreal)" data-spec="LEARN"><b>LEARN</b><span>write bug→fix edges</span><code>memory.record() · Surreal</code></div>
+  <div class="st" id="s-closed" style="left:50px;top:450px;--c:var(--ok)" data-spec="CLOSED"><b>CLOSED ✓</b><span>notify reporter + dashboard</span></div>
+  <div class="st fail" id="s-quar" style="left:290px;top:650px" data-spec="QUARANTINE"><b>QUARANTINE</b><span>unsafe input, human review</span></div>
+  <div class="st fail" id="s-rollback" style="left:770px;top:650px" data-spec="ROLLBACK"><b>ROLLBACK</b><span>alarm or smoke fail → revert</span></div>
+  <div class="st fail" id="s-esc" style="left:1270px;top:650px" data-spec="ESCALATE"><b>ESCALATE</b><span>3 failed patches → on-call</span></div>
+</div>
+
+<!-- ===================== B02 SEQUENCE ===================== -->
+<div class="frame" id="seq" data-name="B02 · Incident Sequence (happy path)" style="left:1620px;top:1400px;width:1760px;height:1000px">
+  <div class="ftitle"><div class="h2">Incident #212 sequence</div><div class="sm muted">Timestamps from the demo run · solid = call · dashed = response · total 38s</div></div>
+  <div id="seqBody"></div>
+</div>
+
+<!-- ===================== B03 SCHEMA ===================== -->
+<div class="frame" id="schema" data-name="B03 · SurrealDB Schema (graph + vector)" style="left:0;top:2600px;width:1660px;height:1000px">
+  <div class="ftitle"><div class="h2">SurrealDB schema</div><div class="sm muted">Nodes = tables (yellow keys) · pink = graph edges via RELATE · vector index on bug.embedding</div></div>
+  <div class="tbl" id="t-flow" style="left:50px;top:150px;--c:var(--anchor)" data-spec="flow table"><h6>flow <span>node</span></h6><div class="k"><span>id</span><span>flow:checkout</span></div><div><span>name</span><span>string</span></div><div><span>steps</span><span>array&lt;object&gt;</span></div><div><span>schedule</span><span>duration</span></div><div><span>spec_path</span><span>string</span></div></div>
+  <div class="tbl" id="t-run" style="left:50px;top:420px;--c:var(--anchor)" data-spec="run table"><h6>run <span>node</span></h6><div class="k"><span>id</span><span>ulid</span></div><div><span>ok</span><span>bool</span></div><div><span>failed_step</span><span>option&lt;int&gt;</span></div><div><span>anchor_session</span><span>string</span></div><div><span>screenshot</span><span>s3 url</span></div><div><span>at</span><span>datetime</span></div></div>
+  <div class="tbl" id="t-bug" style="left:430px;top:300px;--c:var(--bad)" data-spec="bug table" data-pin="The bug is the centre of the graph. 'similar_to' edges are created by a vector search at RECALL time, so the graph grows smarter with every incident."><h6>bug <span>node</span></h6><div class="k"><span>id</span><span>bug:212</span></div><div><span>signature</span><span>string</span></div><div><span>embedding</span><span>array&lt;float, 1024&gt;</span></div><div><span>stack</span><span>string</span></div><div><span>severity</span><span>'sev1'|'sev2'|'sev3'</span></div><div><span>status</span><span>string</span></div></div>
+  <div class="tbl" id="t-flag" style="left:430px;top:640px;--c:var(--warn)" data-spec="flag table"><h6>flag <span>node</span></h6><div class="k"><span>id</span><span>ulid</span></div><div><span>note</span><span>string</span></div><div><span>events</span><span>array&lt;object&gt;</span></div><div><span>screened</span><span>'clean'|'quarantined'</span></div></div>
+  <div class="tbl" id="t-fix" style="left:820px;top:150px;--c:var(--ok)" data-spec="fix table"><h6>fix <span>node</span></h6><div class="k"><span>id</span><span>fix:f_241</span></div><div><span>diff</span><span>string</span></div><div><span>reasoning</span><span>string</span></div><div><span>verified</span><span>bool</span></div><div><span>pr_url</span><span>string</span></div><div><span>trace_id</span><span>string</span></div></div>
+  <div class="tbl" id="t-file" style="left:820px;top:470px;--c:var(--info)" data-spec="file table"><h6>file <span>node</span></h6><div class="k"><span>id</span><span>file:⟨checkout.ts⟩</span></div><div><span>repo</span><span>string</span></div><div><span>fix_count</span><span>int (computed)</span></div></div>
+  <div class="tbl" id="t-deploy" style="left:820px;top:700px;--c:var(--aws)" data-spec="deploy table"><h6>deploy <span>node</span></h6><div class="k"><span>id</span><span>deploy:v1_4_3</span></div><div><span>canary</span><span>array&lt;object&gt;</span></div><div><span>rolled_back</span><span>bool</span></div></div>
+  <div class="tbl" id="t-eval" style="left:1190px;top:150px;--c:var(--arize)" data-spec="eval table"><h6>eval <span>node</span></h6><div class="k"><span>id</span><span>ulid</span></div><div><span>score</span><span>float</span></div><div><span>rubric</span><span>object</span></div><div><span>arize_trace</span><span>url</span></div></div>
+  <pre class="code abs" data-hl style="left:1190px;top:400px;width:430px;font-size:11.5px" data-spec="Schema DDL" data-sponsor="surreal">DEFINE TABLE bug SCHEMAFULL;
+DEFINE FIELD signature ON bug TYPE string;
+DEFINE FIELD embedding ON bug TYPE array&lt;float&gt;;
+DEFINE INDEX bug_vec ON bug FIELDS embedding
+  HNSW DIMENSION 1024 DIST COSINE;
+
+DEFINE TABLE fixed_by TYPE RELATION
+  IN bug OUT fix;
+DEFINE TABLE similar_to TYPE RELATION
+  IN bug OUT bug;
+DEFINE FIELD score ON similar_to TYPE float;
+
+-- recall: nearest past bugs + their fixes
+SELECT id, signature,
+  -&gt;fixed_by-&gt;fix.* AS fixes,
+  vector::similarity::cosine(embedding, $e) AS sim
+FROM bug WHERE embedding &lt;|3|&gt; $e;
+
+-- dashboard stream
+LIVE SELECT * FROM fixed_by, similar_to;</pre>
+</div>
+
+<!-- ===================== B04 API & EVENTS ===================== -->
+<div class="frame" data-name="B04 · API & Event Contract" style="left:1760px;top:2600px;width:1620px;height:1000px">
+  <div class="ftitle"><div class="h2">API &amp; event contract</div><div class="sm muted">packages/shared-types is the single source · zod schemas → REST validation + typed WebSocket events</div></div>
+  <div class="panel abs" style="left:40px;top:130px;width:760px;overflow:hidden" data-spec="REST endpoints">
+    <table class="ut"><thead><tr><th>Method</th><th>Path</th><th>Purpose</th></tr></thead><tbody id="apiRows"></tbody></table>
+  </div>
+  <pre class="code abs" data-hl style="left:830px;top:130px;width:750px;font-size:11.5px" data-spec="Event types" data-pin="The dashboard is a pure function of this event stream. Replaying the events from SurrealDB rebuilds any incident screen, which is great for demos.">// packages/shared-types/events.ts
+export type Stage =
+  'detect' | 'triage' | 'recall' | 'reproduce' | 'patch'
+  | 'verify' | 'gate' | 'deploy' | 'judge' | 'learn';
+
+export type IncidentEvent =
+  | { type: 'incident.opened'; id: string; flow: string; error: string }
+  | { type: 'stage.started'; id: string; stage: Stage; sponsor: Sponsor }
+  | { type: 'anchor.step'; id: string; step: number; ok: boolean; shot?: string }
+  | { type: 'memory.match'; id: string; bugId: string; similarity: number }
+  | { type: 'sandbox.log'; id: string; sandboxId: string; line: string }
+  | { type: 'llm.token'; id: string; text: string }
+  | { type: 'patch.ready'; id: string; diff: string; confidence: number }
+  | { type: 'deploy.progress'; id: string; percent: 5 | 25 | 100; healthy: boolean }
+  | { type: 'eval.scored'; id: string; score: number; traceUrl: string }
+  | { type: 'incident.closed'; id: string; outcome: 'healed' | 'rolled_back' | 'escalated' };
+
+export type Sponsor = 'anchor' | 'surreal' | 'daytona' | 'bedrock' | 'aws' | 'arize';</pre>
+  <pre class="code abs" data-hl style="left:40px;top:640px;width:760px;font-size:11.5px" data-spec="Flag payload">// POST /v1/flags   (from the 🐞 widget)
+export const FlagInput = z.object({
+  projectId: z.string(),
+  note: z.string().max(2000),       // untrusted, screened before use
+  url: z.string().url(),
+  events: z.array(DomEvent).max(50),
+  viewport: z.tuple([z.number(), z.number()]),
+});</pre>
+  <pre class="code abs" data-hl style="left:830px;top:640px;width:750px;font-size:11.5px" data-spec="Sponsor adapter interface">// every sponsor sits behind one small interface
+export interface Adapter&lt;In, Out&gt; {
+  name: Sponsor;
+  call(input: In, ctx: RunContext): Promise&lt;Out&gt;;   // traced + retried
+}
+// ctx carries: incidentId, otel span, scoped secrets, abort signal</pre>
+</div>
+
+<!-- ===================== B05 MONOREPO ===================== -->
+<div class="frame" data-name="B05 · TypeScript Monorepo" style="left:0;top:3800px;width:1240px;height:1000px">
+  <div class="ftitle"><div class="h2">TypeScript monorepo</div><div class="sm muted">pnpm workspaces + turbo · each sponsor isolated in its own adapter package</div></div>
+  <pre class="tree abs" style="left:50px;top:130px" data-spec="Repo tree"><span class="d">healops/</span>
+├─ <span class="d">apps/</span>
+│  ├─ <span class="d">dashboard/</span>        <span class="n"># Next.js mission control (frontend.html)</span>
+│  ├─ <span class="d">api/</span>              <span class="n"># Fastify REST + flag intake</span>
+│  ├─ <span class="d">worker/</span>           <span class="n"># runs the orchestrator off SQS</span>
+│  └─ <span class="d">widget/</span>           <span class="n"># healops.js 🐞 (6kb, no deps)</span>
+├─ <span class="d">packages/</span>
+│  ├─ <span class="d">agent/</span>            <span class="n"># state machine, policy, prompts</span>
+│  │  ├─ machine.ts
+│  │  ├─ stages/{detect,triage,recall,reproduce,patch,verify,gate,deploy,judge,learn}.ts
+│  │  └─ policy.ts      <span class="n"># autonomy + risk score</span>
+│  ├─ <span class="d">sponsors/</span>
+│  │  ├─ <span class="sp" style="color:#3ea6ff">anchor/</span>       <span class="n"># sessions, flow runner (Playwright over CDP)</span>
+│  │  ├─ <span class="sp" style="color:#ff00a0">surreal/</span>      <span class="n"># memory: similar(), record(), live()</span>
+│  │  ├─ <span class="sp" style="color:#a3ff5c">daytona/</span>      <span class="n"># sandbox: reproduce(), verify()</span>
+│  │  ├─ <span class="sp" style="color:#ff9900">bedrock/</span>      <span class="n"># converseStream, guardrail, embed</span>
+│  │  ├─ <span class="sp" style="color:#ff9900">aws-deploy/</span>   <span class="n"># CodeDeploy canary, rollback</span>
+│  │  └─ <span class="sp" style="color:#8f6bff">arize/</span>        <span class="n"># OTel setup, evals client</span>
+│  ├─ <span class="d">shared-types/</span>     <span class="n"># zod schemas + IncidentEvent union</span>
+│  └─ <span class="d">flows/</span>            <span class="n"># recorded key flows → *.spec.ts</span>
+├─ <span class="d">infra/</span>               <span class="n"># AWS CDK (TypeScript)</span>
+└─ <span class="d">demo/</span>                <span class="n"># lol-store with seeded bugs for stage</span></pre>
+  <pre class="code abs" data-hl style="left:700px;top:130px;width:500px;font-size:11.5px" data-spec="Stage example: reproduce.ts" data-sponsor="daytona">// packages/agent/stages/reproduce.ts
+export const reproduce: Stage = async (inc, ctx) =&gt; {
+  const sb = await daytona.call({
+    repo: inc.repo, sha: inc.sha,
+  }, ctx);
+  const res = await sb.run(
+    'npx playwright test ' + inc.flow.spec);
+
+  ctx.emit({ type: 'sandbox.log', ... });
+  if (res.exitCode === 0)
+    return { next: 'triage', note: 'not reproducible' };
+  return { next: 'patch', evidence: res.output };
+};</pre>
+  <pre class="code abs" data-hl style="left:700px;top:520px;width:500px;font-size:11.5px" data-spec="Machine runner">// packages/agent/machine.ts
+export async function drive(inc: Incident) {
+  let stage: Stage = inc.stage;
+  while (stage !== 'closed') {
+    const out = await tracer.startActiveSpan(stage,
+      (span) =&gt; STAGES[stage](inc, ctxFor(inc, span)));
+    await memory.transition(inc.id, stage, out);
+    emit({ type: 'stage.started', id: inc.id,
+           stage: out.next, sponsor: SPONSOR_OF[out.next] });
+    stage = out.next;
+  }
+}</pre>
+</div>
+
+<!-- ===================== B06 TELEMETRY ===================== -->
+<div class="frame" id="tele" data-name="B06 · Telemetry & Evals (Arize)" style="left:1340px;top:3800px;width:1500px;height:1000px">
+  <div class="ftitle"><div class="h2">Telemetry &amp; evals</div><div class="sm muted">One trace per incident · OpenInference attributes on LLM spans · judge runs on closed traces</div></div>
+  <div class="panel abs" style="left:40px;top:130px;width:880px;padding:16px 20px" data-spec="Span tree" data-sponsor="arize" data-pin="This is the trace judges will see in Arize. Put the sponsor name on every span (healops.sponsor) so you can filter and cost each one.">
+    <div class="row" style="margin-bottom:8px"><span class="cap">trace 7f3a91 · incident #212</span><span class="grow"></span><span class="mono sm">38.1s</span></div>
+    <div id="spans"></div>
+  </div>
+  <div class="panel abs" style="left:950px;top:130px;width:510px;padding:16px" data-spec="Eval rubric" data-sponsor="arize">
+    <div class="h3" style="margin-bottom:10px">Fix-quality rubric v3</div>
+    <table class="ut"><thead><tr><th>Criterion</th><th>Weight</th><th>Judge asks</th></tr></thead><tbody class="sm">
+      <tr><td>Correctness</td><td class="mono">0.35</td><td class="muted">Does the diff address the root cause in the trace?</td></tr>
+      <tr><td>Minimal diff</td><td class="mono">0.20</td><td class="muted">Are there unrelated changes?</td></tr>
+      <tr><td>Test coverage</td><td class="mono">0.20</td><td class="muted">Was a regression test added?</td></tr>
+      <tr><td>Safety</td><td class="mono">0.15</td><td class="muted">Any secrets, auth or permission changes?</td></tr>
+      <tr><td>Memory use</td><td class="mono">0.10</td><td class="muted">Did it reuse a relevant past fix?</td></tr>
+    </tbody></table>
+  </div>
+  <pre class="code abs" data-hl style="left:950px;top:520px;width:510px;font-size:11.5px" data-spec="OTel setup" data-sponsor="arize">// packages/sponsors/arize/otel.ts
+const provider = new NodeTracerProvider({
+  resource: new Resource({
+    'service.name': 'healops-agent',
+    'openinference.project.name': 'healops',
+  }),
+});
+provider.addSpanProcessor(new BatchSpanProcessor(
+  new OTLPTraceExporter({
+    url: 'https://otlp.arize.com/v1',
+    headers: { space_id: SPACE, api_key: KEY },
+  })));
+provider.register();</pre>
+  <div class="panel abs" style="left:40px;top:620px;width:880px;padding:16px" data-spec="Span attributes">
+    <div class="cap" style="margin-bottom:8px">Attributes on every span</div>
+    <div class="row" style="flex-wrap:wrap;gap:6px">
+      <span class="pill">healops.incident_id</span><span class="pill">healops.stage</span><span class="pill">healops.sponsor</span><span class="pill">healops.attempt</span>
+      <span class="pill sp-aws">llm.model_name</span><span class="pill sp-aws">llm.token_count.total</span><span class="pill sp-surreal">memory.similarity</span><span class="pill sp-daytona">sandbox.id</span><span class="pill sp-daytona">sandbox.exit_code</span><span class="pill sp-anchor">anchor.session_id</span><span class="pill sp-aws">deploy.percent</span><span class="pill sp-arize">eval.score</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== B07 INFRA ===================== -->
+<div class="frame" id="infra" data-name="B07 · AWS Infra & Redundancy" style="left:2940px;top:3800px;width:1600px;height:1000px">
+  <div class="ftitle"><div class="h2">AWS infra &amp; redundancy</div><div class="sm muted">"Avoid the Cloudflare incident": no change reaches 100% at once · 3 AZs · weighted blue/green · alarm-driven rollback</div></div>
+  <div class="bx" id="i-cf" style="left:660px;top:120px;--w:280px;--c:var(--aws)" data-spec="CloudFront + Route 53"><b>🌍 CloudFront + Route 53</b><div class="t">health-checked origin failover</div></div>
+  <div class="bx" id="i-alb" style="left:660px;top:250px;--w:280px;--c:var(--aws)" data-spec="ALB weighted target groups" data-pin="Canary = ALB weighted target groups. The weights move 95/5 → 75/25 → 0/100 only while the alarms stay green and the Anchor smoke flows pass."><b>⚖ ALB · weighted routing</b><div class="t">blue v1.4.2 / green v1.4.3</div></div>
+  <div class="row abs" style="left:420px;top:250px;gap:6px"><span class="weight" id="wBlue" style="color:#3ea6ff">95</span><span class="muted">/</span><span class="weight" id="wGreen" style="color:#2fd58a">5</span></div>
+  <div class="az" style="left:120px;top:400px;width:420px;height:300px"><span class="cap abs" style="left:14px;top:10px;color:var(--aws)">us-east-1a</span></div>
+  <div class="az" style="left:590px;top:400px;width:420px;height:300px"><span class="cap abs" style="left:14px;top:10px;color:var(--aws)">us-east-1b</span></div>
+  <div class="az" style="left:1060px;top:400px;width:420px;height:300px"><span class="cap abs" style="left:14px;top:10px;color:var(--aws)">us-east-1c</span></div>
+  <div id="tasks"></div>
+  <div class="bx" id="i-cw" style="left:160px;top:770px;--w:300px;--c:var(--aws)" data-spec="CloudWatch alarms"><b>📊 CloudWatch alarms</b><div class="t">5xx &gt; 1% · p95 +30% · per AZ</div></div>
+  <div class="bx" id="i-rb" style="left:650px;top:770px;--w:300px;--c:var(--bad)" data-spec="Auto rollback"><b>↶ Rollback Lambda</b><div class="t">weights → 100/0 in &lt; 30s</div></div>
+  <div class="bx" id="i-smoke" style="left:1140px;top:770px;--w:300px;--c:var(--anchor)" data-spec="Anchor canary smoke" data-sponsor="anchor"><b>🌐 Anchor smoke flows</b><div class="t">pinned to green target group</div></div>
+  <div class="panel abs" style="left:120px;top:900px;width:1360px;padding:12px 16px" data-spec="Redundancy checklist">
+    <div class="row sm" style="flex-wrap:wrap;gap:22px"><span>✔ 3 AZs, min 2 tasks each</span><span>✔ DB migrations rehearsed in Daytona first</span><span>✔ config changes canaried like code</span><span>✔ control plane in a separate account</span><span>✔ SurrealDB backups to S3 hourly</span></div>
+  </div>
+</div>
+
+<!-- ===================== B08 SAFETY ===================== -->
+<div class="frame" id="safety" data-name="B08 · Trust Boundaries & Permissions" style="left:0;top:5000px;width:1560px;height:900px">
+  <div class="ftitle"><div class="h2">Trust boundaries &amp; permissions</div><div class="sm muted">An agent that can deploy code must treat every input as untrusted · defense in depth · least privilege per tool</div></div>
+  <div class="zone" style="left:40px;top:140px;width:320px;height:380px;--zc:#ff5470;border-color:#ff547055"><span class="zl">Untrusted</span></div>
+  <div class="zone" style="left:420px;top:140px;width:320px;height:380px;--zc:#ffb547;border-color:#ffb54755"><span class="zl">Screening</span></div>
+  <div class="zone" style="left:800px;top:140px;width:320px;height:380px;--zc:#7c5cff;border-color:#7c5cff55"><span class="zl">Agent core</span></div>
+  <div class="zone" style="left:1180px;top:140px;width:340px;height:380px;--zc:#2fd58a;border-color:#2fd58a55"><span class="zl">Tools (least privilege)</span></div>
+  <div class="bx" id="x-flag" style="left:70px;top:180px;--c:var(--bad)" data-spec="User flag text"><b>User flag text</b><div class="t">free text from anyone</div></div>
+  <div class="bx" id="x-page" style="left:70px;top:290px;--c:var(--bad)"><b>Page content</b><div class="t">what Anchor reads</div></div>
+  <div class="bx" id="x-adv" style="left:70px;top:400px;--c:var(--bad)"><b>Advisories / changelogs</b><div class="t">third-party text</div></div>
+  <div class="bx" id="x-guard" style="left:450px;top:200px;--c:var(--aws)" data-spec="Guardrails screen" data-sponsor="aws"><b>Bedrock Guardrails</b><div class="t">ApplyGuardrail on input</div></div>
+  <div class="bx" id="x-wrap" style="left:450px;top:340px;--c:var(--warn)" data-spec="Data-not-instructions wrapper"><b>Untrusted wrapper</b><div class="t">delimited as data, never as instructions</div></div>
+  <div class="bx" id="x-orch" style="left:830px;top:200px;--c:var(--accent)"><b>Orchestrator</b><div class="t">policy gate on every tool call</div></div>
+  <div class="bx" id="x-llm" style="left:830px;top:340px;--c:var(--aws)"><b>Bedrock model</b><div class="t">output screened too</div></div>
+  <div class="bx" id="x-sb" style="left:1220px;top:180px;--c:var(--daytona)" data-sponsor="daytona"><b>Daytona sandbox</b><div class="t">no prod secrets · repo read token</div></div>
+  <div class="bx" id="x-dep" style="left:1220px;top:290px;--c:var(--aws)"><b>Deployer role</b><div class="t">only via gate + canary</div></div>
+  <div class="bx" id="x-mem" style="left:1220px;top:400px;--c:var(--surreal)" data-sponsor="surreal"><b>SurrealDB</b><div class="t">scoped user: agent ns only</div></div>
+  <div class="panel abs" style="left:40px;top:560px;width:900px;overflow:hidden" data-spec="Permission matrix">
+    <table class="ut"><thead><tr><th>Tool</th><th>Read repo</th><th>Push branch</th><th>Prod secrets</th><th>Deploy</th><th>Internet</th></tr></thead><tbody id="perm"></tbody></table>
+  </div>
+  <div class="panel abs" style="left:970px;top:560px;width:550px;padding:16px" data-spec="Autonomy thresholds">
+    <div class="h3" style="margin-bottom:10px">Autonomy thresholds</div>
+    <div class="col sm" style="gap:8px">
+      <div class="row"><span class="pill st-ok">risk &lt; 35</span>auto-deploy with canary</div>
+      <div class="row"><span class="pill st-warn">35 – 70</span>human approval in Slack / dashboard</div>
+      <div class="row"><span class="pill st-bad">&gt; 70</span>PR only, never auto-deploy</div>
+      <div class="row"><span class="pill st-bad">always</span>auth, payments config and secrets need a human</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== B09 BUILD PLAN ===================== -->
+<div class="frame" data-name="B09 · 24h Build Plan" style="left:1660px;top:5000px;width:1700px;height:900px">
+  <div class="ftitle"><div class="h2">24-hour build plan</div><div class="sm muted">Ship the happy path first, then make it beautiful, then add the safety story</div></div>
+  <div class="abs" style="left:40px;top:130px;width:1620px" data-spec="Gantt chart" data-pin="Freeze features at hour 20. The final 4 hours are for demo rehearsal with a seeded bug that you know heals reliably.">
+    <div class="gantt" id="gantt"></div>
+  </div>
+  <div class="row abs" style="left:40px;top:760px;gap:14px">
+    <span class="pill st-ok">H6 · first auto-fix end to end (ugly is fine)</span>
+    <span class="pill st-info">H14 · dashboard live on real events</span>
+    <span class="pill st-warn">H20 · feature freeze</span>
+    <span class="pill sp-arize">H24 · demo</span>
+  </div>
+</div>
+
+    </div>
+    <canvas id="minimap"></canvas>
+    <div id="hint">Drag to pan · Wheel to zoom · ← → frames · P play · C comments</div>
+  </main>
+  <aside id="inspector"></aside>
+</div>
+
+<script>
+window.FIG_SPONSORS = {
+  anchor:{name:'Anchor Browser',c:'#3ea6ff',url:'https://anchorbrowser.io'},
+  daytona:{name:'Daytona',c:'#a3ff5c',url:'https://www.daytona.io'},
+  aws:{name:'AWS Bedrock',c:'#ff9900',url:'https://aws.amazon.com/bedrock/'},
+  surreal:{name:'SurrealDB',c:'#ff00a0',url:'https://surrealdb.com'},
+  arize:{name:'Arize',c:'#8f6bff',url:'https://arize.com'}
+};
+window.FIG_NOTES = {
+  'B00 · System Architecture': '<p>Three rules:</p><ul><li>The API never talks to sponsors. Only the orchestrator does, through adapters.</li><li>Every sponsor call is traced (Arize) and recorded (SurrealDB).</li><li>Production changes only happen through the Deployer (canary + rollback).</li></ul><p>Press <b>P</b> to watch an incident packet flow through.</p>',
+  'B01 · Agent State Machine': '<p>Use a plain TS discriminated union, with no framework needed. The state is persisted to SurrealDB after each transition, so a crashed worker resumes exactly where it stopped.</p>',
+  'B02 · Incident Sequence (happy path)': '<p>The exact order of calls in the demo, with timings. Use it as the script for both the code and the pitch narration.</p>',
+  'B03 · SurrealDB Schema (graph + vector)': '<p>SurrealDB fits this because one store handles <b>graph</b> (bug→fix→file), <b>vector</b> (similar errors) and <b>realtime</b> (LIVE SELECT to the dashboard).</p>',
+  'B04 · API & Event Contract': '<p>Small surface: 9 REST routes + 1 WebSocket. The UI renders purely from <code>IncidentEvent</code>s.</p>',
+  'B05 · TypeScript Monorepo': '<p>One package per sponsor keeps the sponsor story clear in the repo. Judges can open <code>packages/sponsors/</code> and see all five.</p>',
+  'B06 · Telemetry & Evals (Arize)': '<p>Arize plays two roles: <b>observability</b> (trace per incident) and <b>quality gate</b> (judge score feeds the GATE stage and the dashboard).</p>',
+  'B07 · AWS Infra & Redundancy': '<p>Answers the whiteboard items "use of AWS to check redundancy" and "avoid Cloudflare incident". Press <b>P</b> to watch the weights shift.</p>',
+  'B08 · Trust Boundaries & Permissions': '<p>Answers the whiteboard items on prompt injection. Defense in depth: screen inputs, treat them as data, screen outputs, and give tools only what they need.</p>',
+  'B09 · 24h Build Plan': '<p>Four parallel lanes. The critical path is Agent → Integrations → first end-to-end heal by hour 6.</p>'
+};
+
+/* ---------- tiny highlighter (TS + SurrealQL) ---------- */
+(function () {
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const RE = /(\/\/[^\n]*|--[^\n]*)|('(?:[^'\\\n]|\\.)*')|\b(import|from|export|const|let|async|await|function|return|if|while|new|type|interface|Promise|string|number|boolean|DEFINE|TABLE|FIELD|TYPE|INDEX|ON|SCHEMAFULL|RELATION|IN|OUT|SELECT|FROM|WHERE|LIVE|HNSW|DIMENSION|DIST|COSINE|FIELDS|AS)\b|\b([A-Za-z_]\w*)(?=\()/g;
+  document.querySelectorAll('[data-hl]').forEach((el) => {
+    el.innerHTML = esc(el.textContent).replace(RE, (m, c, s, k, f) =>
+      c ? `<span class="c">${c}</span>` : s ? `<span class="s">${s}</span>` : k ? `<span class="k">${k}</span>` : `<span class="f">${f}</span>`);
+  });
+})();
+
+/* ---------- sequence diagram ---------- */
+const LANES = [['Anchor', 'anchor', 'browser'], ['Orchestrator', 'accent', 'packages/agent'], ['SurrealDB', 'surreal', 'memory'], ['Daytona', 'daytona', 'sandbox'],
+  ['Bedrock', 'aws', 'LLM + guardrails'], ['AWS Deploy', 'aws', 'CodeDeploy'], ['Arize', 'arize', 'OTel + evals'], ['Dashboard', 'ok', 'WebSocket']];
+const MSGS = [
+  [0, 1, 'flow failed @ step 4', '00.0'], [1, 7, 'incident.opened', '00.1'], [1, 4, 'ApplyGuardrail(error ctx)', '00.3'], [4, 1, 'clean', '00.6', 1],
+  [1, 2, 'similar(embedding)', '01.2'], [2, 1, 'bug #118 · 0.87 · fix f_88', '01.3', 1], [1, 3, 'create + clone @a41c9e', '02.0'], [3, 1, 'test FAILED (repro ✓)', '13.4', 1],
+  [1, 4, 'ConverseStream(ctx + memory)', '13.6'], [4, 7, 'llm.token stream', '14.0'], [4, 1, 'patch (+2 −1) · conf 0.91', '19.8', 1], [1, 3, 'apply + full suite', '20.0'],
+  [3, 1, '42/42 passed', '29.6', 1], [1, 6, 'pre-score(trace)', '29.7'], [6, 1, '0.91 ≥ 0.8 → gate ok', '30.1', 1], [1, 5, 'canary 5→25→100', '30.3'],
+  [5, 0, 'smoke flows on canary', '33.0'], [0, 5, '5/5 ✓', '35.2', 1], [5, 1, 'promoted v1.4.3', '37.4', 1], [1, 6, 'judge(trace) → 93', '37.8'],
+  [1, 2, 'RELATE bug->fixed_by->fix', '38.0'], [1, 7, 'incident.closed · healed', '38.1']
+];
+(function seq() {
+  const body = document.getElementById('seqBody');
+  const lx = (i) => 130 + i * 214;
+  let html = '';
+  LANES.forEach(([n, c, s], i) => {
+    html += `<div class="lane-h" style="left:${lx(i)}px;--c:var(--${c})" data-spec="Lane: ${n}">${n}<span>${s}</span></div><div class="lane-l" style="left:${lx(i)}px"></div>`;
+  });
+  MSGS.forEach(([a, b, label, t, ret], k) => {
+    const y = 200 + k * 35, x1 = lx(a), x2 = lx(b), c = LANES[ret ? a : a][1];
+    html += `<div class="msg ${x2 > x1 ? 'r' : 'l'} ${ret ? 'ret' : ''}" style="left:${Math.min(x1, x2)}px;width:${Math.abs(x2 - x1)}px;top:${y}px;--c:var(--${LANES[a][1]})"><em>${label}</em><i>${t}s</i></div>`;
+  });
+  body.innerHTML = html;
+})();
+
+/* ---------- API rows ---------- */
+document.getElementById('apiRows').innerHTML = [
+  ['post', 'POST', '/v1/flags', 'Widget bug report → screen → enqueue'],
+  ['post', 'POST', '/v1/flows', 'Save a recorded Anchor flow'],
+  ['post', 'POST', '/v1/flows/:id/run', 'Run a flow now'],
+  ['get', 'GET', '/v1/incidents', 'List incidents (filters)'],
+  ['get', 'GET', '/v1/incidents/:id', 'Incident + timeline + evidence'],
+  ['post', 'POST', '/v1/incidents/:id/approve', 'Human approves gated deploy'],
+  ['post', 'POST', '/v1/incidents/:id/takeover', 'Pause agent, hand to human'],
+  ['post', 'POST', '/v1/deploys/:id/rollback', 'Manual one-click rollback'],
+  ['get', 'GET', '/v1/memory/graph', 'Graph snapshot for dashboard'],
+  ['ws', 'WS', '/ws/incidents/:id', 'Live IncidentEvent stream']
+].map(([c, m, p, d]) => `<tr><td><span class="method m-${c}">${m}</span></td><td class="mono sm">${p}</td><td class="sm muted">${d}</td></tr>`).join('');
+
+/* ---------- spans ---------- */
+document.getElementById('spans').innerHTML = [
+  ['incident #212', 0, 100, '#7c5cff', '38.1s', 0], ['detect · anchor.run_flow', 0, 6, '#3ea6ff', '2.3s', 1], ['triage · bedrock.guardrail', 6, 2, '#ff9900', '0.6s', 1],
+  ['recall · surreal.similar', 8, 1, '#ff00a0', '12ms', 1], ['reproduce · daytona.sandbox', 9, 30, '#a3ff5c', '11.4s', 1], ['  npm ci', 10, 16, '#a3ff5c88', '6.1s', 2], ['  playwright test', 26, 12, '#a3ff5c88', '4.6s', 2],
+  ['patch · bedrock.converse', 39, 16, '#ff9900', '6.2s', 1], ['verify · daytona.test', 55, 22, '#a3ff5c', '9.6s', 1], ['gate · arize.pre_score', 77, 2, '#8f6bff', '0.4s', 1],
+  ['deploy · aws.canary', 79, 19, '#ff9900', '7.1s', 1], ['  anchor.smoke (canary)', 86, 6, '#3ea6ff88', '2.2s', 2], ['judge · arize.eval', 98, 1, '#8f6bff', '0.3s', 1], ['learn · surreal.relate', 99, 1, '#ff00a0', '8ms', 1]
+].map(([n, l, w, c, d, ind]) => `<div class="span-row"><span style="padding-left:${ind * 16}px;color:${ind ? '#c9d3e6' : '#fff'}">${n.trim()}</span><div class="bar"><i class="spanbar" style="--l:${l}%;--w:${Math.max(w, .6)}%;background:${c}"></i></div><span class="muted" style="text-align:right">${d}</span></div>`).join('');
+
+/* ---------- infra tasks ---------- */
+document.getElementById('tasks').innerHTML = [120, 590, 1060].map((x, i) => `
+  <div class="task blue" style="left:${x + 40}px;top:460px">● v1.4.2 · task ${i * 2 + 1}</div>
+  <div class="task blue" style="left:${x + 230}px;top:460px">● v1.4.2 · task ${i * 2 + 2}</div>
+  <div class="task green" style="left:${x + 40}px;top:580px">● v1.4.3 · task ${i * 2 + 1}</div>
+  <div class="task green" style="left:${x + 230}px;top:580px">● v1.4.3 · task ${i * 2 + 2}</div>`).join('') +
+  `<div class="abs mono xs muted" style="left:130px;top:530px">blue target group</div><div class="abs mono xs muted" style="left:130px;top:650px">green target group</div>`;
+
+/* ---------- permissions ---------- */
+document.getElementById('perm').innerHTML = [
+  ['Anchor runner', '–', '–', '–', '–', 'target site only'], ['Daytona sandbox', '✔ read token', '✔ fix/* only', '✖', '✖', 'npm registry'],
+  ['Bedrock calls', '–', '–', '✖', '✖', 'n/a'], ['Deployer', '–', '–', 'deploy role', '✔ via gate', '–'], ['SurrealDB user', '–', '–', '–', '–', 'agent ns only']
+].map((r) => `<tr>${r.map((c, i) => `<td class="${i ? 'mono sm' : ''}" style="color:${c.startsWith('✖') ? 'var(--bad)' : c.startsWith('✔') ? 'var(--ok)' : ''}">${c}</td>`).join('')}</tr>`).join('');
+
+/* ---------- gantt ---------- */
+(function gantt() {
+  const lanes = [
+    ['Agent core', [[0, 3, 'state machine + types', '#7c5cff'], [3, 6, 'stages wired', '#7c5cff'], [9, 6, 'retry · policy gate · rollback', '#7c5cff'], [15, 5, 'safety screening', '#ffb547']]],
+    ['Integrations', [[0, 2, 'Anchor flow', '#3ea6ff'], [2, 2, 'Daytona', '#a3ff5c'], [4, 2, 'Bedrock', '#ff9900'], [6, 3, 'SurrealDB memory', '#ff00a0'], [9, 3, 'Arize OTel + evals', '#8f6bff'], [12, 5, 'AWS canary + CDK', '#ff9900']]],
+    ['Frontend', [[2, 4, 'design tokens + shell', '#2fd58a'], [6, 8, 'Live Incident screen', '#2fd58a'], [14, 6, 'Memory · Approval · widget', '#2fd58a']]],
+    ['Demo app + pitch', [[0, 4, 'lol-store + seeded bugs', '#c9d3e6'], [10, 4, 'pitch narrative', '#c9d3e6'], [20, 4, 'rehearse ×5 · backup video', '#ff5470']]]
+  ];
+  let h = '<div></div>' + Array.from({ length: 24 }, (_, i) => `<div class="h">H${i + 1}</div>`).join('');
+  lanes.forEach(([name, blocks]) => {
+    h += `<div class="lane">${name}</div>`;
+    for (let i = 0; i < 24; i++) {
+      const b = blocks.find((x) => x[0] === i);
+      h += `<div class="cell">${b ? `<div class="blk" style="left:2px;width:calc(${b[1] * 100}% + ${(b[1] - 1)}px - 4px);background:${b[3]}">${b[2]}</div>` : ''}</div>`;
+    }
+  });
+  document.getElementById('gantt').innerHTML = h;
+})();
+</script>
+<script src="figma.js"></script>
+<script>
+/* ---------- wires (drawn after layout) ---------- */
+const P = '#7c5cff', G = '#8a95ab', R = '#ff5470';
+const archW = Fig.wire(document.getElementById('arch'), [
+  { from: 'a-sched', to: 'a-orch', label: 'every 5 min', color: P, dir: 'h' },       // 0
+  { from: 'a-widget', to: 'a-api', label: 'POST /flags', color: P },                 // 1
+  { from: 'a-api', to: 'a-sqs', label: 'enqueue', color: P },                        // 2
+  { from: 'a-sqs', to: 'a-orch', label: 'job', color: P, dir: 'v' },                 // 3
+  { from: 'a-orch', to: 'a-anchor', label: 'run flow', color: '#3ea6ff', oy: -70 },  // 4
+  { from: 'a-anchor', to: 'a-app', label: 'clicks', color: '#3ea6ff' },              // 5
+  { from: 'a-orch', to: 'a-surreal', label: 'recall / record', color: '#ff00a0', oy: -30 }, // 6
+  { from: 'a-orch', to: 'a-daytona', label: 'repro / verify', color: '#a3ff5c', oy: 10 },   // 7
+  { from: 'a-daytona', to: 'a-gh', label: 'clone · push fix/*', color: '#a3ff5c' },  // 8
+  { from: 'a-orch', to: 'a-bedrock', label: 'reason · patch · screen', color: '#ff9900', oy: 50 }, // 9
+  { from: 'a-orch', to: 'a-deploy', label: 'approved patch', color: P, dir: 'v', ox: -110 },      // 10
+  { from: 'a-deploy', to: 'a-app', label: 'canary', color: '#ff9900', dir: 'h', dash: true },     // 11
+  { from: 'a-cw', to: 'a-rb', label: 'alarm', color: R, dash: true },                // 12
+  { from: 'a-rb', to: 'a-deploy', label: 'revert', color: R, dash: true },           // 13
+  { from: 'a-orch', to: 'a-arize', label: 'OTel spans · evals', color: '#8f6bff', dir: 'h', oy: 90 }, // 14
+  { from: 'a-orch', to: 'a-ws', label: 'events', color: G, dir: 'h' },               // 15
+  { from: 'a-ws', to: 'a-dash', label: 'live updates', color: G },                   // 16
+  { from: 'a-orch', to: 'a-s3', label: 'artifacts', color: G, dir: 'v', ox: -60, ox2: 0 }, // 17
+  { from: 'a-app', to: 'a-cw', label: 'metrics', color: G, dir: 'v' },               // 18
+  { from: 'a-ws', to: 'a-slack', label: 'escalations', color: G, dir: 'h' },          // 19
+]);
+
+const smW = Fig.wire(document.getElementById('sm'), [
+  { from: 's-detect', to: 's-triage', color: '#3ea6ff' }, { from: 's-triage', to: 's-recall', color: '#ffb547' },
+  { from: 's-recall', to: 's-repro', color: '#ff00a0' }, { from: 's-repro', to: 's-patch', color: '#a3ff5c' },
+  { from: 's-patch', to: 's-verify', color: '#ff9900', dir: 'h' }, { from: 's-verify', to: 's-gate', color: '#a3ff5c', dir: 'h', label: 'green' },
+  { from: 's-gate', to: 's-deploy', color: '#3ea6ff', label: 'allowed' }, { from: 's-deploy', to: 's-judge', color: '#ff9900', label: 'healthy' },
+  { from: 's-judge', to: 's-learn', color: '#8f6bff' }, { from: 's-learn', to: 's-closed', color: '#ff00a0' },
+  { from: 's-verify', to: 's-patch', color: R, dash: true, label: 'red · retry ≤3', dir: 'v', ox: 40, ox2: 60 },
+  { from: 's-verify', to: 's-esc', color: R, dash: true, label: '3 fails', dir: 'v' },
+  { from: 's-triage', to: 's-quar', color: R, dash: true, label: 'unsafe', dir: 'v' },
+  { from: 's-deploy', to: 's-rollback', color: R, dash: true, label: 'alarm', dir: 'v' },
+  { from: 's-rollback', to: 's-repro', color: R, dash: true, label: 'reopen with evidence', dir: 'h', oy: 0 },
+  { from: 's-repro', to: 's-triage', color: R, dash: true, label: 'not reproducible', dir: 'h', oy: 30, oy2: 30 }
+]);
+
+Fig.wire(document.getElementById('schema'), [
+  { from: 't-run', to: 't-flow', label: 'of', color: '#ff79c6', dir: 'v' },
+  { from: 't-run', to: 't-bug', label: 'detected', color: '#ff79c6' },
+  { from: 't-flag', to: 't-bug', label: 'reported', color: '#ff79c6', dir: 'v' },
+  { from: 't-bug', to: 't-fix', label: 'fixed_by', color: '#ff79c6' },
+  { from: 't-fix', to: 't-file', label: 'touches', color: '#ff79c6', dir: 'v' },
+  { from: 't-fix', to: 't-eval', label: 'scored', color: '#ff79c6' },
+  { from: 't-bug', to: 't-file', label: 'in_file', color: '#ff79c6', dash: true },
+  { from: 't-fix', to: 't-deploy', label: 'deployed_as', color: '#ff79c6', dir: 'v', ox: 100, ox2: 100 }
+]);
+// self-edge bug->similar_to->bug drawn manually
+(function () {
+  const t = document.getElementById('t-bug');
+  const l = document.createElement('div');
+  l.className = 'self';
+  l.style.cssText = `left:${t.offsetLeft + t.offsetWidth}px;top:${t.offsetTop + 50}px;--c:#ff79c6;height:40px`;
+  l.innerHTML = '<em style="color:#ff79c6">similar_to (score)</em>';
+  document.getElementById('schema').appendChild(l);
+})();
+
+Fig.wire(document.getElementById('infra'), [
+  { from: 'i-cf', to: 'i-alb', color: '#ff9900', dir: 'v' },
+  { from: 'i-cw', to: 'i-rb', label: 'breach', color: R, dash: true },
+  { from: 'i-smoke', to: 'i-rb', label: 'smoke fail', color: R, dash: true },
+]);
+
+Fig.wire(document.getElementById('safety'), [
+  { from: 'x-flag', to: 'x-guard', color: R }, { from: 'x-page', to: 'x-guard', color: R }, { from: 'x-adv', to: 'x-wrap', color: R },
+  { from: 'x-guard', to: 'x-orch', color: '#ffb547', label: 'clean only' }, { from: 'x-wrap', to: 'x-llm', color: '#ffb547' },
+  { from: 'x-orch', to: 'x-sb', color: '#2fd58a' }, { from: 'x-orch', to: 'x-dep', color: '#2fd58a', label: 'gate' }, { from: 'x-llm', to: 'x-mem', color: '#2fd58a' },
+  { from: 'x-orch', to: 'x-llm', color: P, dir: 'v' }
+]);
+
+/* ---------- play: architecture incident packet ---------- */
+const $a = (id) => document.getElementById(id);
+function lit(ids, on = true) { ids.forEach((i) => $a(i)?.classList.toggle('lit', on)); }
+Fig.on('B00 · System Architecture', () => {
+  const seq = [
+    [0, ['a-sched', 'a-orch']], [4, ['a-orch', 'a-anchor']], [5, ['a-anchor', 'a-app']], [15, ['a-orch', 'a-ws']], [16, ['a-ws', 'a-dash']],
+    [6, ['a-orch', 'a-surreal']], [7, ['a-orch', 'a-daytona']], [8, ['a-daytona', 'a-gh']], [9, ['a-orch', 'a-bedrock']], [7, ['a-daytona']],
+    [10, ['a-orch', 'a-deploy']], [11, ['a-deploy', 'a-app']], [18, ['a-app', 'a-cw']], [14, ['a-orch', 'a-arize']], [6, ['a-surreal']], [17, ['a-s3']]
+  ];
+  let prev = [];
+  return Fig.loop(seq.map(([e, ids]) => [() => { lit(prev, false); lit(ids); prev = ids; archW.send(e, 0.9); }, 1000]).concat([[() => lit(prev, false), 1200]]));
+});
+
+Fig.on('B01 · Agent State Machine', () => {
+  const path = ['s-detect', 's-triage', 's-recall', 's-repro', 's-patch', 's-verify', 's-gate', 's-deploy', 's-judge', 's-learn', 's-closed'];
+  let prev;
+  return Fig.loop(path.map((id, i) => [() => {
+    if (prev) $a(prev).classList.remove('lit');
+    $a(id).classList.add('lit'); prev = id;
+    if (i < path.length - 1) smW.send(i, 0.7);
+  }, 850]).concat([[() => $a(prev).classList.remove('lit'), 900]]));
+});
+
+Fig.on('B02 · Incident Sequence (happy path)', (frame) => {
+  const msgs = [...frame.querySelectorAll('.msg')];
+  let k = 0;
+  return Fig.loop([[() => { msgs.forEach((m, i) => m.classList.toggle('lit', i === k)); k = (k + 1) % msgs.length; }, 450]]);
+});
+
+Fig.on('B07 · AWS Infra & Redundancy', (frame) => {
+  const b = $a('wBlue'), g = $a('wGreen');
+  const greens = [...frame.querySelectorAll('.task.green')], blues = [...frame.querySelectorAll('.task.blue')];
+  const set = (bw, gw) => { b.textContent = bw; g.textContent = gw;
+    blues.forEach((t) => (t.style.opacity = 0.25 + 0.75 * bw / 100)); greens.forEach((t) => (t.style.opacity = 0.25 + 0.75 * gw / 100)); };
+  return Fig.loop([[() => set(100, 0), 1500], [() => set(95, 5), 1500], [() => set(75, 25), 1500], [() => set(0, 100), 2500]]);
+});
+
+Fig.on('B06 · Telemetry & Evals (Arize)', (frame) => {
+  const bars = [...frame.querySelectorAll('.spanbar')];
+  return Fig.loop([[() => {
+    bars.forEach((b, i) => { b.style.transition = 'none'; b.style.clipPath = 'inset(0 100% 0 0)';
+      setTimeout(() => { b.style.transition = 'clip-path .6s'; b.style.clipPath = 'inset(0 0 0 0)'; }, 60 + i * 180); });
+  }, 5000]]);
+});
+</script>
+</body>
+</html>

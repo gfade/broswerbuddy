@@ -1,0 +1,10 @@
+{
+  "name": "@healops/widget",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/widget.ts --bundle --minify --format=iife --target=es2020 --outfile=dist/healops.js"
+  },
+  "dependencies": {}
+}

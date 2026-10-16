@@ -1,0 +1,30 @@
+[
+  {
+    "id": "neon-hoodie",
+    "name": "Neon Hoodie",
+    "priceCents": 4900,
+    "blurb": "Heavyweight fleece that glows under blacklight.",
+    "hue": 285
+  },
+  {
+    "id": "pixel-tee",
+    "name": "Pixel Tee",
+    "priceCents": 2500,
+    "blurb": "Soft cotton tee with a 16-bit sunset print.",
+    "hue": 200
+  },
+  {
+    "id": "glitch-cap",
+    "name": "Glitch Cap",
+    "priceCents": 1900,
+    "blurb": "Six-panel cap with a scrambled embroidered logo.",
+    "hue": 150
+  },
+  {
+    "id": "static-socks",
+    "name": "Static Socks",
+    "priceCents": 1200,
+    "blurb": "Crew socks that never stop buzzing.",
+    "hue": 35
+  }
+]

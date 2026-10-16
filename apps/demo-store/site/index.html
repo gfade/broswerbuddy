@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LOL Store</title>
+    <link rel="stylesheet" href="css/store.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>LOL Store</a>
+      <nav class="nav" aria-label="Main">
+        <a href="index.html" aria-current="page">Shop</a>
+        <a href="signup.html">Newsletter</a>
+      </nav>
+    </header>
+
+    <div class="promo-bar">Free shipping over $40 &middot; Use code <strong>LOL20</strong> for 20% off</div>
+
+    <main>
+      <section class="confirmation" data-testid="order-confirmation" hidden>
+        <h2>Order confirmed</h2>
+        <p>Order <strong data-testid="order-id"></strong> for <span data-testid="order-total"></span> is on its way. Thanks for shopping the LOL Store!</p>
+      </section>
+
+      <div class="layout">
+        <section class="shop" aria-labelledby="shop-title">
+          <div class="shop-head">
+            <h1 id="shop-title">The drop</h1>
+            <label class="search">
+              <span class="sr-only">Search products</span>
+              <input type="search" data-testid="search" placeholder="Search products" autocomplete="off" />
+            </label>
+          </div>
+          <div class="grid-wrap">
+            <div class="grid" data-testid="product-grid" aria-live="polite">
+              <p class="loading">Loading the drop&hellip;</p>
+            </div>
+            <div class="free-gift-sheen" aria-hidden="true"></div>
+            <p class="no-results" data-testid="no-results" hidden>No products match that search.</p>
+          </div>
+        </section>
+
+        <aside class="cart" aria-labelledby="cart-title">
+          <h2 id="cart-title">Cart <span class="count"><span data-testid="cart-count">0</span> items</span></h2>
+          <p class="cart-empty" data-testid="cart-empty">Your cart is empty. Add something cozy.</p>
+          <ul class="cart-lines" data-testid="cart-lines"></ul>
+          <dl class="totals">
+            <div><dt>Subtotal</dt><dd data-testid="cart-subtotal">$0.00</dd></div>
+            <div class="discount-row" data-testid="discount-row" hidden><dt>Discount</dt><dd data-testid="cart-discount">-$0.00</dd></div>
+            <div class="grand"><dt>Total</dt><dd data-testid="cart-total">$0.00</dd></div>
+          </dl>
+          <form class="discount" data-testid="discount-form" novalidate>
+            <label class="sr-only" for="discount-input">Discount code</label>
+            <input id="discount-input" type="text" data-testid="discount-input" placeholder="Discount code" autocomplete="off" />
+            <button type="submit" class="btn btn-ghost" data-testid="apply-discount">Apply</button>
+          </form>
+          <p class="discount-message" data-testid="discount-message" role="status"></p>
+          <button type="button" class="btn btn-pay" data-testid="pay-now">Pay now</button>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>LOL Store demo storefront &middot; <span id="version">v1.4.2</span></p>
+    </footer>
+    <script type="module" src="js/app.js"></script>
+    <!--HEALOPS_WIDGET-->
+  </body>
+</html>

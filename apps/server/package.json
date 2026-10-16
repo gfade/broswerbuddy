@@ -1,0 +1,16 @@
+{
+  "name": "@healops/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/main.ts",
+  "types": "./src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "dependencies": {
+    "ws": "latest",
+    "@healops/shared": "*",
+    "@healops/agent": "*"
+  }
+}

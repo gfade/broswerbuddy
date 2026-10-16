@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Self-Healing QA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="logo"><i></i>HealOps <span class="sub">/ Self-Healing QA Engineer</span></div>
+  <div class="links"><a href="#flow">Loop</a><a href="#ideas">Ideas</a><a href="#matrix">Sponsor fit</a></div>
+</div></nav>
+
+<div class="wrap">
+  <header class="hero" id="flow">
+    <div>
+      <span class="eyebrow"><b></b>AGENT ONLINE · watching www.lol.com</span>
+      <h1>The QA engineer that <em>finds the bug and ships the fix</em> before your users notice.</h1>
+      <p class="lead">Anchor Browser clicks your key flows. When something breaks, Daytona reproduces it in a sandbox, AWS Bedrock writes the patch, SurrealDB remembers every bug as a graph, and Arize grades the fix. All of it in TypeScript.</p>
+      <div class="cta">
+        <button class="btn" id="heal">▶ Watch it heal</button>
+        <a class="btn ghost" href="#ideas">See 6 build ideas</a>
+      </div>
+    </div>
+
+    <div class="browser">
+      <div class="bar"><span></span><span></span><span></span>
+        <div class="url"><span>https://www.lol.com/checkout</span><span class="live" id="liveTag">● now live</span></div>
+      </div>
+      <div class="page" id="page">
+        <h3>LOL Store</h3><p>Hosted on AWS · v1.4.2</p>
+        <div class="product"><div class="thumb"></div><div style="flex:1"><div class="sk" style="width:70%"></div><div class="sk" style="width:45%"></div></div></div>
+        <button class="checkout" id="checkout">Checkout · $49</button>
+        <div class="toast" id="toast"></div>
+        <div class="bugbtn" id="bugbtn">🐞 Bugs?</div>
+        <div class="cursor" id="cursor">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 2l18 9-8 2-3 8z" fill="#3ea6ff" stroke="#fff" stroke-width="1.5"/></svg>
+          <span class="tag">anchor-agent</span>
+        </div>
+        <div class="click-ring" id="ring"></div>
+      </div>
+      <div class="pipe" id="pipe">
+        <div class="node" style="--c:var(--anchor)">Anchor<small>detect</small></div>
+        <div class="node" style="--c:var(--surreal)">SurrealDB<small>recall</small></div>
+        <div class="node" style="--c:var(--daytona)">Daytona<small>repro</small></div>
+        <div class="node" style="--c:var(--aws)">Bedrock<small>fix</small></div>
+        <div class="node" style="--c:var(--aws)">AWS<small>deploy</small></div>
+        <div class="node" style="--c:var(--arize)">Arize<small>judge</small></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="sponsors">
+    <p>Built on every sponsor · click to visit</p>
+    <div class="srow">
+      <a class="sp" style="--c:var(--aws)" href="https://aws.amazon.com/bedrock/" target="_blank" rel="noopener"><i></i><div><b>AWS Bedrock</b><br><span>LLM reasoning, hosting, guardrails</span></div></a>
+      <a class="sp" style="--c:var(--anchor)" href="https://anchorbrowser.io" target="_blank" rel="noopener"><i></i><div><b>Anchor Browser</b><br><span>Agentic browser that clicks key flows</span></div></a>
+      <a class="sp" style="--c:var(--daytona)" href="https://www.daytona.io" target="_blank" rel="noopener"><i></i><div><b>Daytona</b><br><span>Sandboxes to repro and test fixes</span></div></a>
+      <a class="sp" style="--c:var(--surreal)" href="https://surrealdb.com" target="_blank" rel="noopener"><i></i><div><b>SurrealDB</b><br><span>Agent memory and bug graph</span></div></a>
+      <a class="sp" style="--c:var(--arize)" href="https://arize.com" target="_blank" rel="noopener"><i></i><div><b>Arize</b><br><span>Traces, evals, fix-quality judge</span></div></a>
+    </div>
+  </div>
+
+  <section id="ideas">
+    <div class="sh">
+      <h2>6 things to build<br>in TypeScript</h2>
+      <p>Each idea uses all five sponsors and comes from the whiteboard. Click a card to run its animated agent loop and see the TypeScript sketch.</p>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="matrix">
+    <div class="sh"><h2>Sponsor fit matrix</h2><p>The role each sponsor plays in each idea. Every row covers all five, so judges see each sponsor doing real work.</p></div>
+    <div class="mx-wrap"><table class="matrix" id="mx"></table></div>
+  </section>
+</div>
+
+<footer><div class="wrap">
+  <span>HealOps · Self-Healing QA Engineer</span>
+  <span>TypeScript · Anchor · Daytona · Bedrock · SurrealDB · Arize</span>
+</div></footer>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="mh">
+      <div><div class="num" id="mNum"></div><h3 id="mTitle"></h3><p id="mDesc"></p><div class="chips" id="mChips"></div></div>
+      <button class="x" id="close" aria-label="Close">✕</button>
+    </div>
+    <div class="mb">
+      <div class="panel">
+        <h4>Agent loop <button class="btn small" id="run">▶ Run</button></h4>
+        <ol class="steps" id="steps"></ol>
+        <div class="score">Arize fix score <div class="meter"><i id="meter"></i></div><b id="scoreTxt">--</b></div>
+      </div>
+      <div class="panel">
+        <h4>Live trace <span id="status" class="muted">idle</span></h4>
+        <div class="term" id="term"><span class="caret"></span></div>
+        <div class="why" id="why"></div>
+      </div>
+      <div class="panel full">
+        <h4>TypeScript sketch <div class="tabs" id="tabs"></div></h4>
+        <pre class="code" id="code"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="ideas.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

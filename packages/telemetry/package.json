@@ -1,0 +1,21 @@
+{
+  "name": "@healops/telemetry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "latest",
+    "@opentelemetry/sdk-trace-base": "latest",
+    "@opentelemetry/sdk-trace-node": "latest",
+    "@opentelemetry/exporter-trace-otlp-proto": "latest",
+    "@opentelemetry/resources": "latest",
+    "@opentelemetry/semantic-conventions": "latest",
+    "@arizeai/openinference-semantic-conventions": "latest",
+    "@healops/shared": "*"
+  }
+}

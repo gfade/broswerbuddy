@@ -1,0 +1,705 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HealOps Frontend Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="figma.css">
+<link rel="stylesheet" href="product.css">
+<style>
+/* frame-specific bits */
+.appbar{height:56px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 20px;background:var(--panel)}
+.side{width:220px;border-right:1px solid var(--line);background:var(--panel);padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.side a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--muted);text-decoration:none;font-size:13.5px}
+.side a.on{background:var(--panel2);color:var(--text)}
+.side a i{font-style:normal;width:18px;text-align:center}
+.ctx-h{padding:14px 16px;border-bottom:1px solid var(--line);gap:10px}
+.ctx-b{padding:16px;display:flex;flex-direction:column;gap:12px}
+.browser{background:#fff;color:#151a26;border-radius:12px;overflow:hidden;border:1px solid var(--line);position:relative}
+.bchrome{height:40px;background:#e9ecf2;display:flex;align-items:center;gap:8px;padding:0 12px}
+.bchrome i{width:10px;height:10px;border-radius:50%;background:#c5cad6}
+.burl{flex:1;background:#fff;border-radius:7px;padding:4px 10px;font:12px var(--mono);color:#5d677c;display:flex;justify-content:space-between}
+.store-nav{height:52px;display:flex;align-items:center;gap:24px;padding:0 28px;border-bottom:1px solid #eceff4;font-weight:600}
+.store-nav span{color:#8a93a6;font-weight:500;font-size:13px}
+.err-banner{position:absolute;left:24px;right:24px;top:104px;background:#fff1f3;border:1px solid #ffc2cc;color:#c4183c;border-radius:10px;padding:10px 14px;font:12px var(--mono);opacity:0;transform:translateY(-6px);transition:.35s}
+.err-banner.show{opacity:1;transform:none}
+.ok-banner{position:absolute;left:24px;right:24px;top:104px;background:#e9fbf2;border:1px solid #a8ecc9;color:#0b7a46;border-radius:10px;padding:10px 14px;font:12px var(--mono);opacity:0;transition:.35s}
+.ok-banner.show{opacity:1}
+.cta-buy{background:#151a26;color:#fff;border:0;border-radius:10px;padding:12px 22px;font:600 14px Inter;transition:.3s}
+.cta-buy.broken{background:#e5294d}
+.cta-buy.fixed{background:#12a463}
+.acur{position:absolute;left:80%;top:30%;transition:left 1s cubic-bezier(.6,.1,.3,1),top 1s cubic-bezier(.6,.1,.3,1);z-index:4}
+.acur em{position:absolute;left:18px;top:16px;font:600 10px var(--mono);font-style:normal;background:var(--anchor);color:#001626;padding:2px 6px;border-radius:5px;white-space:nowrap}
+.mirror{position:absolute;inset:40px 0 0 0;background:#0b0e15d9;display:grid;place-items:center;color:#e8edf6;opacity:0;transition:.4s;pointer-events:none}
+.mirror.show{opacity:1}
+.actions{position:absolute;left:0;right:0;bottom:0;background:#f4f6fa;border-top:1px solid #e3e6ee;padding:8px 14px;font:11.5px var(--mono);color:#5d677c;display:flex;gap:14px;overflow:hidden;white-space:nowrap}
+.actions b{color:#151a26}
+.reason{font:13px/1.6 var(--mono);color:#c9d3e6}
+.reason .cur{display:inline-block;width:8px;height:15px;background:var(--text);vertical-align:-2px;animation:blinkA 1s steps(1) infinite}
+.phone{position:absolute;width:340px;height:700px;border-radius:44px;background:#05070b;padding:12px;box-shadow:0 30px 60px #0008}
+.phone .scr{width:100%;height:100%;border-radius:34px;background:#fff;color:#151a26;overflow:hidden;position:relative}
+.notch{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:110px;height:28px;border-radius:20px;background:#05070b;z-index:3}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 40px #0003;padding:22px}
+.reveal .sheet.rv{animation:sheetUp .6s cubic-bezier(.2,.9,.2,1) both}
+@keyframes sheetUp{from{transform:translateY(100%)}}
+.ring-fg{stroke-dasharray:302;stroke-dashoffset:calc(302 - 302 * var(--v))}
+.reveal .ring-fg{animation:ringA 1.6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes ringA{from{stroke-dashoffset:302}}
+.swatch{border-radius:12px;height:76px;padding:10px;display:flex;flex-direction:column;justify-content:flex-end;font:600 11px var(--mono);color:#0a0d14}
+.toggle{width:38px;height:22px;border-radius:99px;background:var(--ok);position:relative;flex-shrink:0}
+.toggle::after{content:"";position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff}
+.toggle.off{background:var(--panel2);border:1px solid var(--line)}
+.toggle.off::after{left:3px;right:auto;background:var(--muted)}
+.node-n{transition:.3s}
+.node-n.hot{filter:drop-shadow(0 0 8px currentColor)}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <div class="tb-logo"><i></i>HealOps</div>
+    <div class="tb-file">Drafts / <b>Self-Healing QA · Frontend</b></div>
+    <div class="tb-sep"></div>
+    <div class="tb-tabs"><a class="on" href="frontend.html">Frontend</a><a href="backend.html">Backend</a></div>
+    <div class="tb-spacer"></div>
+    <button class="tb-btn on" id="pinBtn" title="Toggle comments (C)">💬 Comments</button>
+    <button class="tb-btn" id="fitBtn" title="Zoom to fit (1)">⤢ Fit</button>
+    <span class="tb-btn tb-zoom" id="zoomLbl">100%</span>
+    <button class="tb-btn" id="playBtn" title="Play animations (P)">▶ Play</button>
+  </div>
+  <aside id="layers"><div class="pan-h">Layers <span>Page 1</span></div><div id="layerList"></div></aside>
+  <main id="viewport">
+    <div id="world">
+
+<!-- ===================== SECTION LABELS ===================== -->
+<div class="section-label" style="left:0;top:-110px">① Design system + main screen</div>
+<div class="section-label" style="left:0;top:990px">② Context panel: one state per pipeline step (the right-hand panel of the Live Incident screen)</div>
+<div class="section-label" style="left:0;top:1790px">③ After the incident · human-in-the-loop · end-user widget</div>
+<div class="section-label" style="left:0;top:2840px">④ Operations · setup</div>
+
+<!-- ===================== 00 DESIGN SYSTEM ===================== -->
+<div class="frame" data-name="00 · Design System" style="left:0;top:0;width:1200px;height:900px">
+  <div style="padding:48px">
+    <div class="row"><div class="logo-mark"></div><span class="cap">HealOps · UI kit v0.1</span></div>
+    <div class="h1" style="margin-top:18px" data-spec="Principle headline" data-kind="Text">Show the evidence, not the logo.</div>
+    <p class="muted" style="max-width:720px;margin-top:10px">Each backend sponsor gets one panel that shows what it produced: a graph for SurrealDB, a terminal for Daytona, reasoning and a diff for Bedrock, a canary bar for AWS and a scorecard for Arize. The stepper tells the story and the context panel follows the active step.</p>
+
+    <div class="cap" style="margin:34px 0 12px">Sponsor colours: one per pipeline step</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px" data-spec="Sponsor palette" data-tokens="anchor:#3ea6ff,surreal:#ff00a0,daytona:#a3ff5c,aws:#ff9900,arize:#8f6bff">
+      <div class="swatch" style="background:var(--anchor)">ANCHOR<br>#3EA6FF · Detect</div>
+      <div class="swatch" style="background:var(--surreal);color:#fff">SURREALDB<br>#FF00A0 · Recall</div>
+      <div class="swatch" style="background:var(--daytona)">DAYTONA<br>#A3FF5C · Reproduce</div>
+      <div class="swatch" style="background:var(--aws)">AWS<br>#FF9900 · Fix + Deploy</div>
+      <div class="swatch" style="background:var(--arize);color:#fff">ARIZE<br>#8F6BFF · Judge</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:12px" data-spec="System palette" data-tokens="bg:#0b0e15,panel:#121826,line:#232c40,ok:#2fd58a,bad:#ff5470,warn:#ffb547">
+      <div class="swatch" style="background:#0b0e15;color:#8a95ab;border:1px solid #232c40">BG #0B0E15</div>
+      <div class="swatch" style="background:#121826;color:#8a95ab;border:1px solid #232c40">PANEL #121826</div>
+      <div class="swatch" style="background:#232c40;color:#e8edf6">LINE #232C40</div>
+      <div class="swatch" style="background:var(--ok)">OK #2FD58A</div>
+      <div class="swatch" style="background:var(--bad);color:#fff">BAD #FF5470</div>
+      <div class="swatch" style="background:var(--warn)">WARN #FFB547</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:34px">
+      <div>
+        <div class="cap" style="margin-bottom:12px">Type · Inter + JetBrains Mono</div>
+        <div class="col" style="gap:6px" data-spec="Type scale" data-kind="Text">
+          <div class="h1" style="font-size:34px">Display 40/800</div>
+          <div class="h2">Heading 22/700</div>
+          <div class="h3">Title 16/600</div>
+          <div>Body 14/400 for explanations and descriptions</div>
+          <div class="mono sm muted">mono 12 · logs, ids, metrics, code</div>
+        </div>
+      </div>
+      <div>
+        <div class="cap" style="margin-bottom:12px">Components</div>
+        <div class="col">
+          <div class="row" data-spec="Buttons"><span class="ubtn pri">Approve &amp; deploy</span><span class="ubtn">Take over</span><span class="ubtn danger">Rollback</span></div>
+          <div class="row" data-spec="Status pills" style="flex-wrap:wrap"><span class="pill st-bad"><span class="d"></span>INCIDENT</span><span class="pill st-warn"><span class="d"></span>HEALING</span><span class="pill st-ok"><span class="d"></span>HEALED</span><span class="pill st-info">NEEDS REVIEW</span></div>
+          <div class="row" data-spec="Sponsor tags" style="flex-wrap:wrap"><span class="pill sp-anchor">Anchor</span><span class="pill sp-surreal">SurrealDB</span><span class="pill sp-daytona">Daytona</span><span class="pill sp-aws">AWS</span><span class="pill sp-arize">Arize</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cap" style="margin:30px 0 12px">Pipeline stepper (the core navigation component)</div>
+    <div class="steps6" data-spec="Stepper component" data-pin="Every step is clickable. Clicking a finished step replays that panel, which is useful when judges ask 'show me the repro again'.">
+      <div class="st6 done" style="--c:var(--anchor)"><span class="n">01</span><b>Detect</b><span class="who">ANCHOR</span></div>
+      <div class="st6 done" style="--c:var(--surreal)"><span class="n">02</span><b>Recall</b><span class="who">SURREALDB</span></div>
+      <div class="st6 active" style="--c:var(--daytona)"><span class="n">03</span><b>Reproduce</b><span class="who">DAYTONA</span><i class="prog" style="width:60%"></i></div>
+      <div class="st6" style="--c:var(--aws)"><span class="n">04</span><b>Fix</b><span class="who">BEDROCK</span></div>
+      <div class="st6" style="--c:var(--aws)"><span class="n">05</span><b>Deploy</b><span class="who">AWS</span></div>
+      <div class="st6" style="--c:var(--arize)"><span class="n">06</span><b>Judge</b><span class="who">ARIZE</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 01 LIVE INCIDENT ===================== -->
+<div class="frame" id="live" data-name="01 · Live Incident (Mission Control)" style="left:1300px;top:0;width:1440px;height:900px">
+  <div class="appbar">
+    <div class="logo-mark"></div><b>HealOps</b>
+    <span class="input" style="min-width:220px">lol.com · production ▾</span>
+    <span class="grow"></span>
+    <span class="pill sp-anchor"><span class="d blink"></span>5 flows patrolling</span>
+    <span class="input" style="width:220px">⌘K Search incidents, files…</span>
+    <div class="avatar">GF</div>
+  </div>
+  <div class="row" style="padding:16px 24px;gap:14px" data-spec="Incident header" data-pin="The header answers three questions at a glance: what broke, how bad it is, and how long the agent has been on it. 'Take over' pauses the agent and hands control to a human.">
+    <span class="pill solid st-bad" id="sevPill">SEV-2 · HEALING</span>
+    <div><div class="h2">Checkout fails: <span class="mono" style="font-size:18px">cart.total</span> is undefined</div>
+      <div class="sm muted">Incident #212 · detected by Anchor patrol · flow <b>checkout</b> step 4/5 · affects ~3.1% of sessions</div></div>
+    <span class="grow"></span>
+    <div style="text-align:right"><div class="cap">Time to heal</div><div class="mono" style="font-size:24px;font-weight:600" id="timer">00:00</div></div>
+    <span class="ubtn">⏸ Pause agent</span><span class="ubtn pri">Take over</span>
+  </div>
+  <div style="padding:0 24px">
+    <div class="steps6" id="liveSteps" data-spec="Live stepper">
+      <div class="st6" style="--c:var(--anchor)"><span class="n">01</span><b>Detect</b><span class="who">ANCHOR</span><i class="prog"></i></div>
+      <div class="st6" style="--c:var(--surreal)"><span class="n">02</span><b>Recall</b><span class="who">SURREALDB</span><i class="prog"></i></div>
+      <div class="st6" style="--c:var(--daytona)"><span class="n">03</span><b>Reproduce</b><span class="who">DAYTONA</span><i class="prog"></i></div>
+      <div class="st6" style="--c:var(--aws)"><span class="n">04</span><b>Fix</b><span class="who">BEDROCK</span><i class="prog"></i></div>
+      <div class="st6" style="--c:var(--aws)"><span class="n">05</span><b>Deploy</b><span class="who">AWS</span><i class="prog"></i></div>
+      <div class="st6" style="--c:var(--arize)"><span class="n">06</span><b>Judge</b><span class="who">ARIZE</span><i class="prog"></i></div>
+    </div>
+  </div>
+  <!-- Anchor live browser -->
+  <div class="browser abs" style="left:24px;top:212px;width:880px;height:528px" id="liveBrowser" data-spec="Anchor live browser" data-sponsor="anchor" data-pin="This is the hero. It's an iframe of Anchor's live-view URL, so the audience watches the real agent clicking through the real site.">
+    <div class="bchrome"><i></i><i></i><i></i><div class="burl"><span>https://www.lol.com/checkout</span><span id="verTag" style="color:#0b7a46">v1.4.2</span></div><span class="pill solid sp-anchor" style="font-size:10px">● LIVE · Anchor</span></div>
+    <div class="store-nav">LOL Store <span>Shop</span><span>Deals</span><span>Account</span><span style="margin-left:auto">🛒 2</span></div>
+    <div style="display:flex;gap:28px;padding:64px 28px 0">
+      <div style="width:260px;height:220px;border-radius:16px;background:linear-gradient(135deg,#d9dcff,#c8ecff)"></div>
+      <div style="flex:1">
+        <div style="font-size:24px;font-weight:700">Neon Hoodie</div>
+        <div style="color:#5d677c;margin:6px 0 16px">Discount <b>LOL20</b> applied · 2 items</div>
+        <div style="height:10px;border-radius:5px;background:#eceff4;width:80%;margin-bottom:10px"></div>
+        <div style="height:10px;border-radius:5px;background:#eceff4;width:55%;margin-bottom:26px"></div>
+        <div style="font-size:28px;font-weight:800;margin-bottom:16px">$49.00</div>
+        <button class="cta-buy" id="buyBtn">Pay now</button>
+      </div>
+    </div>
+    <div class="err-banner" id="errBanner">✖ TypeError: Cannot read properties of undefined (reading 'total') · checkout.ts:42</div>
+    <div class="ok-banner" id="okBanner">✔ v1.4.3 deployed by HealOps · checkout flow passing</div>
+    <div class="mirror" id="mirror"><div style="text-align:center"><div class="pill sp-daytona" style="margin-bottom:10px">Daytona sandbox sb_9f2c</div><div class="h3">Replaying this session in an isolated sandbox…</div><div class="sm muted">The production site is untouched</div></div></div>
+    <div class="acur" id="acur"><svg width="22" height="22" viewBox="0 0 24 24"><path d="M3 2l18 9-8 2-3 8z" fill="#3ea6ff" stroke="#fff" stroke-width="1.5"/></svg><em>anchor-agent</em></div>
+    <div class="actions" id="actLog"><span><b>01</b> goto /product/neon</span><span><b>02</b> click "Add to cart" ✓</span><span><b>03</b> type LOL20 ✓</span><span><b>04</b> click "Pay now" …</span></div>
+  </div>
+  <!-- context panel -->
+  <div class="panel abs" style="left:920px;top:212px;width:496px;height:528px;overflow:hidden" id="liveCtx" data-spec="Context panel (follows step)" data-pin="This panel changes for each step. It's where the backend sponsors become visible. Section ② shows all six states.">
+  </div>
+  <!-- reasoning stream -->
+  <div class="panel abs" style="left:24px;top:752px;width:1392px;height:128px;padding:14px 18px" data-spec="Agent reasoning stream" data-sponsor="aws" data-pin="Bedrock streams its reasoning live with ConverseStream. Keep it to one line per thought so it reads like captions.">
+    <div class="row" style="margin-bottom:8px"><span class="cap">Agent reasoning</span><span class="pill sp-aws">Bedrock · streaming</span><span class="grow"></span><span class="xs muted mono">tokens 1,842 · $0.004</span></div>
+    <div class="reason" id="reason"></div>
+  </div>
+</div>
+
+<!-- ===================== 02 CONTEXT STATES ===================== -->
+<div class="frame ctxframe" data-stage="0" data-name="02a · Detect · Anchor" style="left:0;top:1100px;width:460px;height:600px"></div>
+<div class="frame ctxframe" data-stage="1" data-name="02b · Recall · SurrealDB" style="left:500px;top:1100px;width:460px;height:600px"></div>
+<div class="frame ctxframe" data-stage="2" data-name="02c · Reproduce · Daytona" style="left:1000px;top:1100px;width:460px;height:600px"></div>
+<div class="frame ctxframe" data-stage="3" data-name="02d · Fix · Bedrock" style="left:1500px;top:1100px;width:460px;height:600px"></div>
+<div class="frame ctxframe" data-stage="4" data-name="02e · Deploy · AWS" style="left:2000px;top:1100px;width:460px;height:600px"></div>
+<div class="frame ctxframe" data-stage="5" data-name="02f · Judge · Arize" style="left:2500px;top:1100px;width:460px;height:600px"></div>
+
+<!-- ===================== 03 MEMORY & QUALITY ===================== -->
+<div class="frame" id="memory" data-name="03 · Memory & Quality Dashboard" style="left:0;top:1900px;width:1440px;height:900px">
+  <div style="display:flex;height:100%">
+    <div class="side" data-nav="Memory"></div>
+    <div style="flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div class="row"><div><div class="h2">Memory &amp; Quality</div><div class="sm muted">What the agent has learned, and how good its fixes are</div></div><span class="grow"></span><span class="input">Last 14 days ▾</span><span class="ubtn">Open in Surrealist ↗</span><span class="ubtn">Open in Arize ↗</span></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px" data-spec="KPI row" data-pin="Use five KPIs and no more. MTTR and auto-fix rate are the headline numbers for judges.">
+        <div class="kpi"><span class="cap">MTTR</span><b>41s</b><span class="xs ok">▼ 63% vs manual</span></div>
+        <div class="kpi"><span class="cap">Auto-fixed</span><b>87%</b><span class="xs muted">46 of 53 incidents</span></div>
+        <div class="kpi"><span class="cap">Fix quality</span><b style="color:var(--arize)">4.6/5</b><span class="xs muted">Arize judge</span></div>
+        <div class="kpi"><span class="cap">Memory hits</span><b style="color:var(--surreal)">61%</b><span class="xs muted">fixes reused a past fix</span></div>
+        <div class="kpi"><span class="cap">Rollbacks</span><b style="color:var(--warn)">2</b><span class="xs muted">both auto, &lt; 30s</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:16px;flex:1;min-height:0">
+        <div class="panel" style="position:relative;overflow:hidden" data-spec="Bug memory graph" data-sponsor="surreal" data-pin="Fed by SurrealDB LIVE SELECT. New nodes animate in during an incident. Click a node to open its incident and Arize trace.">
+          <div class="row" style="padding:14px 16px"><span class="h3">Bug memory graph</span><span class="pill sp-surreal">SurrealDB · live</span><span class="grow"></span>
+            <span class="xs muted row" style="gap:12px"><span><b style="color:var(--bad)">●</b> bug</span><span><b style="color:var(--ok)">●</b> fix</span><span><b style="color:var(--info)">●</b> file</span><span><b style="color:var(--anchor)">◆</b> flow</span></span></div>
+          <div id="bigGraph" style="position:absolute;inset:50px 0 0 0"></div>
+        </div>
+        <div class="col" style="gap:16px">
+          <div class="panel pad" data-spec="Hotspots list" data-sponsor="surreal">
+            <div class="row" style="margin-bottom:12px"><span class="h3">Hotspots</span><span class="grow"></span><span class="xs muted">fixes per file</span></div>
+            <div class="col" style="gap:10px" id="hotspots"></div>
+            <div class="panel" style="margin-top:14px;padding:10px 12px;background:var(--panel2);font-size:12.5px">💡 <b>checkout.ts</b> has taken 7 fixes. The agent suggests a refactor PR.</div>
+          </div>
+          <div class="panel pad" data-spec="Recurring patterns" data-sponsor="surreal,arize">
+            <div class="h3" style="margin-bottom:10px">Recurring patterns</div>
+            <div class="col sm" style="gap:8px">
+              <div class="row"><span class="pill st-bad">×9</span>Null data before load</div>
+              <div class="row"><span class="pill st-warn">×5</span>Overlay blocks click on mobile</div>
+              <div class="row"><span class="pill st-info">×3</span>Stale cache after deploy</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;height:200px">
+        <div class="panel pad" data-spec="Fix quality trend" data-sponsor="arize" data-pin="Arize eval scores over time. The rising line is the 'it learns' story.">
+          <div class="row"><span class="h3">Fix quality (Arize judge)</span><span class="grow"></span><span class="pill sp-arize">eval: fix_quality</span></div>
+          <svg viewBox="0 0 640 130" width="100%" height="130" id="trend"></svg>
+        </div>
+        <div class="panel pad" data-spec="Time-to-heal distribution" data-sponsor="arize,aws">
+          <div class="row"><span class="h3">Time to heal per incident</span><span class="grow"></span><span class="xs muted">seconds</span></div>
+          <svg viewBox="0 0 640 130" width="100%" height="130" id="bars"></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 04 APPROVAL ===================== -->
+<div class="frame" id="approval" data-name="04 · Deploy Approval (human-in-the-loop)" style="left:1540px;top:1900px;width:760px;height:900px">
+  <div style="position:absolute;inset:0;opacity:.25;filter:blur(2px);padding:24px">
+    <div class="panel" style="height:60px;margin-bottom:16px"></div><div class="panel" style="height:380px;margin-bottom:16px"></div><div class="panel" style="height:200px"></div>
+  </div>
+  <div style="position:absolute;inset:0;background:#05070bb3"></div>
+  <div class="panel abs" style="left:70px;top:90px;width:620px;padding:26px;box-shadow:0 30px 80px #000a" data-spec="Approval modal" data-pin="Shown only when the risk score is above the autonomy policy threshold. Below the threshold the agent deploys on its own and just reports what it did.">
+    <div class="row"><span class="pill st-warn">NEEDS APPROVAL</span><span class="grow"></span><span class="xs muted mono">incident #212 · fix f_241</span></div>
+    <div class="h2" style="margin-top:12px">HealOps wants to deploy v1.4.3</div>
+    <p class="muted sm" style="margin-top:4px">The patch touches the payment path, so your policy requires a human to approve it.</p>
+    <div class="row" style="margin:18px 0 6px"><span class="cap">Risk score</span><span class="grow"></span><b class="mono warn">42 / 100 · medium</b></div>
+    <div class="bar" data-spec="Risk meter"><i style="--w:42%;--c:linear-gradient(90deg,var(--ok),var(--warn))"></i></div>
+    <div class="col" style="margin-top:18px;gap:8px" data-spec="Evidence checklist" data-sponsor="daytona,aws,surreal,arize">
+      <div class="row panel" style="padding:10px 12px"><span class="ok">✔</span><span class="grow">Repro fails before the patch and passes after</span><span class="pill sp-daytona">Daytona · 42/42</span></div>
+      <div class="row panel" style="padding:10px 12px"><span class="ok">✔</span><span class="grow">Input and output screened by Guardrails</span><span class="pill sp-aws">Bedrock</span></div>
+      <div class="row panel" style="padding:10px 12px"><span class="warn">●</span><span class="grow">Blast radius: 2 services, 1 payment file</span><span class="pill sp-surreal">SurrealDB graph</span></div>
+      <div class="row panel" style="padding:10px 12px"><span class="ok">✔</span><span class="grow">Pre-deploy judge score 0.91 (bar is 0.8)</span><span class="pill sp-arize">Arize eval</span></div>
+      <div class="row panel" style="padding:10px 12px"><span class="ok">✔</span><span class="grow">Canary plan 5% → 25% → 100% with auto-rollback</span><span class="pill sp-aws">AWS</span></div>
+    </div>
+    <div class="code" style="margin-top:16px;font-size:11.5px"><span class="c">// checkout.ts  +2 −1</span>
+<span style="color:#ff9aab">- const total = cart.total * (1 - discount);</span>
+<span style="color:#9af0c6">+ if (!cart) return &lt;CheckoutSkeleton /&gt;;</span>
+<span style="color:#9af0c6">+ const total = (cart.total ?? 0) * (1 - discount);</span></div>
+    <div class="row" style="margin-top:20px"><span class="ubtn danger">Reject</span><span class="ubtn ghost">View full PR ↗</span><span class="grow"></span><span class="ubtn pri" data-spec="Approve button">Approve &amp; deploy</span></div>
+    <div class="row sm muted" style="margin-top:14px"><span class="toggle off"></span>Auto-approve fixes like this one (risk &lt; 50, payment path)</div>
+  </div>
+</div>
+
+<!-- ===================== 05 FLAG WIDGET (MOBILE) ===================== -->
+<div class="frame light" id="widget" data-name="05 · Flag-to-Fix Widget (end user, mobile)" style="left:2400px;top:1900px;width:1200px;height:900px">
+  <div style="padding:36px 40px 0"><div class="h2">The end user's view</div><div class="muted sm">One script tag adds the 🐞 button. Users report bugs, and the agent closes the loop by telling them it's fixed.</div></div>
+  <div class="phone" style="left:40px;top:150px" data-spec="Phone A · page + bug button"><div class="scr"><div class="notch"></div>
+    <div style="padding:56px 20px 0"><b style="font-size:18px">LOL Store</b><div style="height:180px;border-radius:16px;background:linear-gradient(135deg,#d9dcff,#c8ecff);margin:16px 0"></div>
+    <div style="font-weight:700;font-size:20px">Neon Hoodie</div><div style="color:#5d677c;font-size:13px">$49.00</div>
+    <button class="cta-buy" style="width:100%;margin-top:18px">Pay now</button>
+    <div style="margin-top:12px;font-size:12px;color:#c4183c">Nothing happens when I tap this…</div></div>
+    <div class="pulse-ring" style="--c:#ffb547;position:absolute;right:16px;bottom:24px;background:#ffb547;border-radius:99px;padding:10px 14px;font-weight:700;font-size:13px">🐞 Bugs?</div>
+  </div></div>
+  <div class="phone" style="left:430px;top:150px" data-spec="Phone B · report sheet" data-pin="The session is attached automatically (last 50 DOM events and the console log). The user writes one sentence and never fills in a long bug form."><div class="scr" id="phoneB"><div class="notch"></div>
+    <div style="padding:56px 20px 0;opacity:.35"><b style="font-size:18px">LOL Store</b><div style="height:180px;border-radius:16px;background:#e4e7f0;margin:16px 0"></div></div>
+    <div class="sheet rv"><div style="width:40px;height:4px;border-radius:2px;background:#d5d9e3;margin:-8px auto 14px"></div>
+      <b style="font-size:17px">What went wrong?</b>
+      <div style="border:1px solid #e3e6ee;border-radius:12px;padding:12px;margin:12px 0;min-height:80px;font-size:14px">Pay now button does nothing after I add the discount</div>
+      <div style="font-size:12px;color:#5d677c;display:flex;flex-direction:column;gap:6px"><span>✔ Session replay attached (23 events)</span><span>✔ Console errors attached (2)</span><span>✔ Device: iPhone · 390×844</span></div>
+      <button class="cta-buy" style="width:100%;margin-top:16px;background:#7c5cff">Send to HealOps</button></div>
+  </div></div>
+  <div class="phone" style="left:820px;top:150px" data-spec="Phone C · fixed notification"><div class="scr" id="phoneC"><div class="notch"></div>
+    <div style="padding:56px 20px 0"><b style="font-size:18px">LOL Store</b><div style="height:180px;border-radius:16px;background:linear-gradient(135deg,#d9dcff,#c8ecff);margin:16px 0"></div>
+    <div style="font-weight:700;font-size:20px">Neon Hoodie</div><div style="color:#5d677c;font-size:13px">$49.00</div>
+    <button class="cta-buy fixed" style="width:100%;margin-top:18px">Pay now ✓</button></div>
+    <div class="rv" style="position:absolute;left:14px;right:14px;top:52px;background:#0b0e15;color:#e8edf6;border-radius:16px;padding:14px;box-shadow:0 10px 30px #0004">
+      <div style="font-size:11px;color:#2fd58a;font-family:var(--mono)">HEALOPS · 41s AGO</div><b>Fixed. Thanks for reporting! 🎉</b><div style="font-size:12.5px;color:#a7b0c2;margin-top:2px">Your report led to fix v1.4.3. Checkout works again.</div></div>
+  </div></div>
+  <div class="row abs" style="left:40px;top:870px;width:1120px;justify-content:space-around;font:600 12px var(--mono);color:#5d677c"><span>A · user hits the bug</span><span>B · one-sentence report</span><span>C · loop closed ~60s later</span></div>
+</div>
+
+<!-- ===================== 06 INCIDENTS ===================== -->
+<div class="frame" data-name="06 · Incidents Inbox" style="left:0;top:2950px;width:1440px;height:820px">
+  <div style="display:flex;height:100%">
+    <div class="side" data-nav="Incidents"></div>
+    <div style="flex:1;padding:24px;min-width:0">
+      <div class="row"><div class="h2">Incidents</div><span class="grow"></span><span class="input" style="width:260px">Filter by flow, file, sponsor…</span><span class="ubtn">Export</span></div>
+      <div class="row" style="margin:16px 0" data-spec="Status tabs"><span class="ubtn sm" style="background:var(--text);color:var(--bg)">All 53</span><span class="ubtn sm ghost">Healing 1</span><span class="ubtn sm ghost">Needs review 2</span><span class="ubtn sm ghost">Resolved 48</span><span class="ubtn sm ghost">Rolled back 2</span></div>
+      <div class="panel" style="overflow:hidden" data-spec="Incident table">
+        <table class="ut" id="incTable"><thead><tr><th>Incident</th><th>Status</th><th>Source</th><th>Flow</th><th>Heal time</th><th>Score</th><th>Memory</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <div style="width:400px;border-left:1px solid var(--line);background:var(--panel);padding:22px" data-spec="Incident drawer (timeline)" data-pin="The timeline is the audit trail. Each row links to the sponsor console where that step's evidence lives.">
+      <div class="row"><span class="pill st-ok">HEALED</span><span class="xs muted mono">#212</span><span class="grow"></span><span class="muted">✕</span></div>
+      <div class="h3" style="margin:10px 0 2px">Checkout fails: cart.total undefined</div><div class="sm muted">Healed in 38s · score 93</div>
+      <div class="col" style="margin-top:20px;gap:0" id="timeline"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 07 FLOWS & INTEGRATIONS ===================== -->
+<div class="frame" data-name="07 · Key Flows & Integrations" style="left:1540px;top:2950px;width:1300px;height:820px">
+  <div style="display:flex;height:100%">
+    <div class="side" data-nav="Flows"></div>
+    <div style="flex:1;padding:24px;display:grid;grid-template-columns:1fr 400px;gap:20px;min-width:0">
+      <div class="col" style="gap:14px">
+        <div class="row"><div class="h2">Key flows</div><span class="grow"></span><span class="ubtn pri" data-spec="Record flow button" data-sponsor="anchor">⏺ Record with Anchor</span></div>
+        <div class="panel" style="overflow:hidden" data-spec="Flows table" data-sponsor="anchor" data-pin="A flow is a recorded Anchor session turned into a Playwright script. The 20-run strip shows flakiness at a glance.">
+          <table class="ut" id="flowTable"><thead><tr><th>Flow</th><th>Schedule</th><th>Last 20 runs</th><th>p95</th><th></th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="panel pad" data-spec="Autonomy policy" data-pin="One slider sets how much the agent can do on its own. Use 'Auto-fix low risk' for the demo.">
+          <div class="row"><span class="h3">Autonomy policy</span><span class="grow"></span><span class="pill st-info">Auto-fix low risk</span></div>
+          <div style="position:relative;margin:22px 8px 8px"><div class="bar"><i style="--w:66%;--c:var(--accent)"></i></div>
+            <div style="position:absolute;left:66%;top:-6px;width:20px;height:20px;border-radius:50%;background:#fff;transform:translateX(-50%);box-shadow:0 0 0 4px #7c5cff55"></div></div>
+          <div class="row xs muted mono" style="justify-content:space-between"><span>Observe</span><span>Suggest PR</span><span style="color:var(--text)">Auto-fix low risk</span><span>Full auto</span></div>
+        </div>
+      </div>
+      <div class="col" style="gap:10px" data-spec="Integrations" data-sponsor="anchor,daytona,aws,surreal,arize">
+        <div class="h3">Integrations</div>
+        <div id="integrations" class="col" style="gap:10px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 08 ONBOARDING ===================== -->
+<div class="frame" data-name="08 · Onboarding (3 minutes to first patrol)" style="left:2940px;top:2950px;width:1100px;height:820px">
+  <div style="padding:40px 48px">
+    <div class="row"><div class="logo-mark"></div><b>HealOps</b><span class="grow"></span><span class="sm muted">Step 3 of 5</span></div>
+    <div class="row" style="margin:28px 0;gap:8px" data-spec="Onboarding stepper">
+      <span class="pill st-ok">✔ 1 Connect repo</span><span class="dim">—</span><span class="pill st-ok">✔ 2 Site URL</span><span class="dim">—</span><span class="pill solid sp-anchor">3 Record a key flow</span><span class="dim">—</span><span class="pill">4 Sponsors</span><span class="dim">—</span><span class="pill">5 Autonomy</span>
+    </div>
+    <div class="h1" style="font-size:34px">Show HealOps what "working" looks like.</div>
+    <p class="muted" style="margin-top:8px;max-width:640px">Click through checkout once. Anchor records it, and the agent turns it into a test that runs every 5 minutes.</p>
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;margin-top:26px">
+      <div class="browser" style="height:380px" data-spec="Anchor recorder preview" data-sponsor="anchor">
+        <div class="bchrome"><i></i><i></i><i></i><div class="burl"><span>https://www.lol.com</span><span style="color:#e5294d">● REC 00:14</span></div></div>
+        <div class="store-nav">LOL Store <span>Shop</span><span>Deals</span></div>
+        <div style="padding:30px 28px;display:flex;gap:20px"><div style="width:180px;height:160px;border-radius:14px;background:linear-gradient(135deg,#d9dcff,#c8ecff)"></div><div><b style="font-size:20px">Neon Hoodie</b><br><button class="cta-buy" style="margin-top:20px;box-shadow:0 0 0 4px #3ea6ff66">Add to cart</button></div></div>
+      </div>
+      <div class="panel pad col" style="gap:10px" data-spec="Recorded steps list">
+        <span class="cap">Recorded steps</span>
+        <div class="row sm"><span class="pill sp-anchor">1</span>goto /</div>
+        <div class="row sm"><span class="pill sp-anchor">2</span>click "Neon Hoodie"</div>
+        <div class="row sm"><span class="pill sp-anchor">3</span>click "Add to cart"</div>
+        <div class="row sm dim"><span class="pill">4</span>waiting for next action…</div>
+        <div class="divider"></div>
+        <div class="xs muted">Assertions are suggested automatically: cart badge = 1, URL contains /cart</div>
+        <span class="grow"></span>
+        <span class="ubtn pri" style="justify-content:center">Save flow "checkout"</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+    <canvas id="minimap"></canvas>
+    <div id="hint">Drag to pan · Wheel to zoom · ← → frames · P play · C comments</div>
+  </main>
+  <aside id="inspector"></aside>
+</div>
+
+<script>
+/* ---------- sponsors + notes for the inspector ---------- */
+window.FIG_SPONSORS = {
+  anchor:{name:'Anchor Browser',c:'#3ea6ff',url:'https://anchorbrowser.io'},
+  daytona:{name:'Daytona',c:'#a3ff5c',url:'https://www.daytona.io'},
+  aws:{name:'AWS Bedrock',c:'#ff9900',url:'https://aws.amazon.com/bedrock/'},
+  surreal:{name:'SurrealDB',c:'#ff00a0',url:'https://surrealdb.com'},
+  arize:{name:'Arize',c:'#8f6bff',url:'https://arize.com'}
+};
+window.FIG_NOTES = {
+  '00 · Design System': '<p>The kit is dark-first, built for a projector. Each sponsor owns one colour, and that colour marks its step everywhere: stepper, pills, panel headers and graph nodes.</p><ul><li>Monospace text means "machine evidence": logs, ids, diffs.</li><li>Status colours (ok / bad / warn) are never reused as sponsor colours.</li></ul>',
+  '01 · Live Incident (Mission Control)': '<p><b>The demo screen.</b> On the left is the real Anchor browser. On the right, a context panel switches automatically to the active step. Along the bottom, Bedrock streams its reasoning.</p><ul><li>Press <b>P</b> to watch a full incident play out.</li><li>The stepper drives the story, so the audience never needs narration to know where we are.</li><li>Build: Next.js page subscribing to <code>/ws/incidents/:id</code>.</li></ul>',
+  '02a · Detect · Anchor': '<p>Shows <b>what the agent did</b>: each step of the recorded flow, where it broke, the screenshot at failure and the console error. Links to the Anchor session recording.</p>',
+  '02b · Recall · SurrealDB': '<p>Makes the database visible as <b>memory</b>. The new bug node appears, links to similar past bugs, and the matching past fix glows. The "Seen before" card is the payoff.</p><p>Data: <code>LIVE SELECT</code> on <code>bug</code>, <code>fix</code>, <code>similar_to</code>, <code>fixed_by</code>.</p>',
+  '02c · Reproduce · Daytona': '<p>Shows proof the bug is real: an isolated sandbox runs the failing test. The red result is what we want to see here; it turns green in the Fix step.</p><p>Stream sandbox stdout over SSE. Show the sandbox id so judges can find it in the Daytona dashboard.</p>',
+  '02d · Fix · Bedrock': '<p>Shows reasoning and the patch: three bullet "thoughts", a confidence bar, the exact diff, then the Daytona re-run going green.</p>',
+  '02e · Deploy · AWS': '<p>Makes deployment visible: the version flips, the canary fills 5% → 25% → 100%, per-zone health tiles show status, and Anchor smoke-tests the canary. The rollback button is always visible.</p>',
+  '02f · Judge · Arize': '<p>Answers "is the AI any good?" with a number: a score ring, rubric bars, a mini trace waterfall and a deep link to the full trace in Arize.</p>',
+  '03 · Memory & Quality Dashboard': '<p>The second demo screen, shown after the live fix to answer "does it get better?". Graph = SurrealDB, trends = Arize.</p>',
+  '04 · Deploy Approval (human-in-the-loop)': '<p>Trust UX. Each checklist row is evidence from a different sponsor, so the human approves based on proof, not vibes.</p>',
+  '05 · Flag-to-Fix Widget (end user, mobile)': '<p>The end-user surface. One script tag. A light theme, because it lives inside the customer\'s brand, not ours.</p>',
+  '06 · Incidents Inbox': '<p>The history view. The Memory column shows how often SurrealDB recall found a reusable past fix.</p>',
+  '07 · Key Flows & Integrations': '<p>Setup for the patrol: recorded flows, schedules and flakiness strips, plus a connection card per sponsor showing its config.</p>',
+  '08 · Onboarding (3 minutes to first patrol)': '<p>Five steps, and the "aha" happens at step 3: recording a flow with Anchor.</p>'
+};
+
+/* ---------- context panel content (shared by 02a-f and the live screen) ---------- */
+const CTX = [
+`<div class="row ctx-h"><span class="pill sp-anchor"><span class="d"></span>Anchor</span><b class="h3">Detect · flow run</b><span class="grow"></span><span class="xs muted mono">session as_71c</span></div>
+<div class="ctx-b">
+  <div class="col rv" style="--i:0;gap:6px" data-spec="Flow step list" data-sponsor="anchor">
+    <div class="row sm"><span class="ok">✔</span>goto /product/neon<span class="grow"></span><span class="xs dim mono">0.8s</span></div>
+    <div class="row sm"><span class="ok">✔</span>click "Add to cart"<span class="grow"></span><span class="xs dim mono">0.3s</span></div>
+    <div class="row sm"><span class="ok">✔</span>type discount "LOL20"<span class="grow"></span><span class="xs dim mono">0.4s</span></div>
+    <div class="row sm" style="color:var(--bad)"><span>✖</span>click "Pay now": no navigation<span class="grow"></span><span class="xs mono">5.0s timeout</span></div>
+    <div class="row sm dim"><span>○</span>assert URL /order/confirmed</div>
+  </div>
+  <div class="rv" style="--i:1;height:150px;border-radius:10px;background:#fff;position:relative;overflow:hidden" data-spec="Failure screenshot">
+    <div style="height:22px;background:#e9ecf2"></div><div style="padding:14px;color:#151a26;font-weight:700">Neon Hoodie <span style="float:right;background:#e5294d;color:#fff;border-radius:6px;padding:4px 10px;font-size:12px">Pay now</span></div>
+    <div style="position:absolute;right:30px;top:52px;width:70px;height:34px;border:2px solid #ff5470;border-radius:8px"></div>
+    <span class="pill st-bad" style="position:absolute;left:10px;bottom:10px">screenshot @ failure</span></div>
+  <div class="term rv" style="--i:2" data-spec="Console capture"><span class="p">console.error</span>
+<span style="color:#ff9aab">TypeError: Cannot read properties of undefined (reading 'total')
+    at Checkout (checkout.ts:42:19)</span></div>
+  <div class="row rv" style="--i:3"><span class="pill st-bad">Flow FAILED</span><span class="sm muted">3 of 3 retries failed, so not flaky</span><span class="grow"></span><span class="ubtn sm">Recording ↗</span></div>
+</div>`,
+
+`<div class="row ctx-h"><span class="pill sp-surreal"><span class="d"></span>SurrealDB</span><b class="h3">Recall · memory graph</b><span class="grow"></span><span class="xs muted mono">query 12ms</span></div>
+<div class="ctx-b">
+  <svg class="rv" style="--i:0" viewBox="0 0 428 220" width="100%" height="220" data-spec="Recall graph" data-sponsor="surreal">
+    <g stroke-width="2" fill="none">
+      <line x1="214" y1="110" x2="110" y2="52" stroke="#ff00a0" stroke-dasharray="5 4"/><line x1="214" y1="110" x2="110" y2="172" stroke="#ff00a088" stroke-dasharray="5 4"/>
+      <line x1="110" y1="52" x2="34" y2="110" stroke="#2fd58a"/><line x1="110" y1="172" x2="34" y2="110" stroke="#2fd58a55"/>
+      <line x1="214" y1="110" x2="330" y2="56" stroke="#3ea6ff88"/><line x1="110" y1="52" x2="330" y2="56" stroke="#3ea6ff55"/>
+      <line x1="214" y1="110" x2="340" y2="170" stroke="#3ea6ff55"/><line x1="214" y1="200" x2="214" y2="128" stroke="#3ea6ff88"/>
+    </g>
+    <text x="150" y="70" fill="#ff00a0" font-size="10" font-family="JetBrains Mono">similar 0.87</text>
+    <circle cx="214" cy="110" r="17" fill="#ff5470" class="glow" style="color:#ff5470"/><text x="214" y="114" text-anchor="middle" font-size="10" fill="#fff" font-weight="700">#212</text>
+    <circle cx="110" cy="52" r="13" fill="#ff547099" stroke="#ff00a0" stroke-width="3"/><text x="110" y="30" text-anchor="middle" font-size="10" fill="#e8edf6">bug #118</text>
+    <circle cx="110" cy="172" r="11" fill="#ff547066"/><text x="110" y="200" text-anchor="middle" font-size="10" fill="#8a95ab">bug #131</text>
+    <circle cx="34" cy="110" r="13" fill="#2fd58a" class="glow" style="color:#2fd58a"/><text x="34" y="138" text-anchor="middle" font-size="10" fill="#2fd58a">fix f_88</text>
+    <rect x="296" y="44" width="80" height="24" rx="6" fill="#3ea6ff22" stroke="#3ea6ff"/><text x="336" y="60" text-anchor="middle" font-size="10" fill="#3ea6ff" font-family="JetBrains Mono">checkout.ts</text>
+    <rect x="306" y="158" width="68" height="24" rx="6" fill="#3ea6ff11" stroke="#3ea6ff66"/><text x="340" y="174" text-anchor="middle" font-size="10" fill="#8a95ab" font-family="JetBrains Mono">cart.ts</text>
+    <path d="M214 192l9 9-9 9-9-9z" fill="#3ea6ff"/><text x="232" y="214" font-size="10" fill="#8a95ab">flow: checkout</text>
+  </svg>
+  <div class="panel pad rv" style="--i:1;border-color:#ff00a066;background:#ff00a00d" data-spec="Seen-before card" data-sponsor="surreal">
+    <div class="row"><span class="pill solid sp-surreal">SEEN BEFORE</span><b>bug #118</b><span class="grow"></span><span class="mono sm" style="color:var(--surreal)">0.87 match</span></div>
+    <div class="sm" style="margin-top:8px">14 days ago: <b>"cart undefined when discount applied before load"</b>. Fixed by <span class="mono ok">f_88</span> (guard + skeleton). Arize score 4.8.</div>
+  </div>
+  <div class="code rv" style="--i:2;font-size:11px"><span class="k">SELECT</span> *, -&gt;fixed_by-&gt;fix <span class="k">AS</span> fixes
+<span class="k">FROM</span> bug <span class="k">WHERE</span> vector::similarity::cosine(
+  embedding, <span class="t">$err</span>) &gt; <span class="s">0.8</span> <span class="k">LIMIT</span> 3;</div>
+</div>`,
+
+`<div class="row ctx-h"><span class="pill sp-daytona"><span class="d"></span>Daytona</span><b class="h3">Reproduce · sandbox</b><span class="grow"></span><span class="ubtn sm">Open sandbox ↗</span></div>
+<div class="ctx-b">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" class="rv" data-spec="Sandbox meta" data-sponsor="daytona">
+    <div class="panel" style="padding:8px 10px"><div class="cap" style="font-size:9.5px">sandbox</div><b class="mono sm">sb_9f2c</b></div>
+    <div class="panel" style="padding:8px 10px"><div class="cap" style="font-size:9.5px">image</div><b class="mono sm">node:20</b></div>
+    <div class="panel" style="padding:8px 10px"><div class="cap" style="font-size:9.5px">commit</div><b class="mono sm">a41c9e</b></div>
+    <div class="panel" style="padding:8px 10px"><div class="cap" style="font-size:9.5px">boot</div><b class="mono sm ok">0.09s</b></div>
+  </div>
+  <div class="term" style="height:230px" data-spec="Sandbox terminal" data-sponsor="daytona">
+<div class="rv" style="--i:1"><span class="p">$</span> git clone lol-store@a41c9e app</div>
+<div class="rv" style="--i:2"><span class="p">$</span> npm ci <span class="ok">✓ 812 packages (6.1s)</span></div>
+<div class="rv" style="--i:3"><span class="p">$</span> npx playwright test flows/checkout.spec.ts</div>
+<div class="rv" style="--i:4">  Running 1 test using 1 worker</div>
+<div class="rv" style="--i:5;color:#ff9aab">  ✘ checkout › discount then pay (2.3s)</div>
+<div class="rv" style="--i:6;color:#ff9aab">    TypeError: …reading 'total'</div>
+<div class="rv" style="--i:7;color:#ff9aab">      at checkout.ts:42:19</div>
+<div class="rv" style="--i:8">  <span style="color:#ff9aab">1 failed</span> · trace.zip saved</div></div>
+  <div class="row rv" style="--i:9"><span class="pill solid st-bad">REPRODUCED · 11.4s</span><span class="sm muted">fails the same way as production</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;--i:10" class="rv">
+    <div><div class="row xs muted"><span>CPU</span><span class="grow"></span>64%</div><div class="bar grow-w"><i style="--w:64%;--c:var(--daytona)"></i></div></div>
+    <div><div class="row xs muted"><span>Memory</span><span class="grow"></span>1.5 / 4 GB</div><div class="bar grow-w"><i style="--w:38%;--c:var(--daytona)"></i></div></div>
+  </div>
+</div>`,
+
+`<div class="row ctx-h"><span class="pill sp-aws"><span class="d"></span>AWS Bedrock</span><b class="h3">Fix · reason + patch</b><span class="grow"></span><span class="xs muted mono">claude · bedrock</span></div>
+<div class="ctx-b">
+  <div class="col" style="gap:6px" data-spec="Reasoning bullets" data-sponsor="aws">
+    <div class="row sm rv" style="--i:0;align-items:start"><span class="pill sp-aws">1</span>Stack trace points at <span class="mono">cart.total</span> in checkout.ts:42</div>
+    <div class="row sm rv" style="--i:1;align-items:start"><span class="pill sp-surreal">2</span>Memory: #118 had the same shape, fixed with a guard + skeleton</div>
+    <div class="row sm rv" style="--i:2;align-items:start"><span class="pill sp-aws">3</span>Cart is undefined when the discount is applied before the cart loads</div>
+  </div>
+  <div class="rv" style="--i:3"><div class="row xs muted"><span>Confidence</span><span class="grow"></span>0.91</div><div class="bar grow-w"><i style="--w:91%;--c:var(--aws)"></i></div></div>
+  <div class="code diff rv" style="--i:4;padding:10px 0" data-spec="Patch diff" data-sponsor="aws"><div class="c" style="padding:0 8px 6px">checkout.ts</div><div><span class="ln">41</span>  const cart = useCart();</div><div class="del"><span class="ln">42</span>- const total = cart.total * (1 - discount);</div><div class="add"><span class="ln">42</span>+ if (!cart) return &lt;CheckoutSkeleton /&gt;;</div><div class="add"><span class="ln">43</span>+ const total = (cart.total ?? 0) * (1 - discount);</div><div><span class="ln">44</span>  return &lt;Pay total={total} /&gt;;</div></div>
+  <div class="row rv" style="--i:5" data-spec="Verification row" data-sponsor="daytona,aws"><span class="pill solid st-ok">DAYTONA RE-RUN · 42/42 ✓</span><span class="pill st-ok">Guardrails clean</span><span class="grow"></span><span class="ubtn sm">PR #241 ↗</span></div>
+</div>`,
+
+`<div class="row ctx-h"><span class="pill sp-aws"><span class="d"></span>AWS</span><b class="h3">Deploy · canary</b><span class="grow"></span><span class="xs muted mono">ECS · us-east-1</span></div>
+<div class="ctx-b">
+  <div class="row rv" style="--i:0;justify-content:center;gap:16px" data-spec="Version flip"><span class="mono" style="font-size:22px;color:var(--muted);text-decoration:line-through">v1.4.2</span><span style="font-size:20px">→</span><span class="mono" style="font-size:26px;font-weight:700;color:var(--ok)">v1.4.3</span></div>
+  <div class="col" style="gap:8px" data-spec="Canary progress" data-sponsor="aws">
+    <div class="rv" style="--i:1"><div class="row xs mono"><span>5% canary</span><span class="grow"></span><span class="ok">healthy · 60s</span></div><div class="bar grow-w"><i style="--w:100%;--c:var(--aws)"></i></div></div>
+    <div class="rv" style="--i:3"><div class="row xs mono"><span>25%</span><span class="grow"></span><span class="ok">healthy · 60s</span></div><div class="bar grow-w" style="--i:3"><i style="--w:100%;--c:var(--aws)"></i></div></div>
+    <div class="rv" style="--i:5"><div class="row xs mono"><span>100%</span><span class="grow"></span><span class="warn">promoting…</span></div><div class="bar grow-w" style="--i:5"><i style="--w:72%;--c:var(--aws)"></i></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" data-spec="AZ health tiles" data-sponsor="aws" data-note="Multi-AZ redundancy (from the whiteboard). Each tile reads its CloudWatch alarm state.">
+    <div class="panel rv" style="--i:2;padding:10px"><div class="cap" style="font-size:9.5px">us-east-1a</div><b class="ok">● healthy</b><div class="xs muted mono">p95 182ms · 0.0% err</div></div>
+    <div class="panel rv" style="--i:3;padding:10px"><div class="cap" style="font-size:9.5px">us-east-1b</div><b class="ok">● healthy</b><div class="xs muted mono">p95 175ms · 0.0% err</div></div>
+    <div class="panel rv" style="--i:4;padding:10px"><div class="cap" style="font-size:9.5px">us-east-1c</div><b class="ok">● healthy</b><div class="xs muted mono">p95 190ms · 0.1% err</div></div>
+  </div>
+  <div class="panel rv" style="--i:6;padding:10px 12px"><div class="row xs muted"><span>Error rate</span><span class="grow"></span><span class="mono">before → after deploy</span></div>
+    <svg viewBox="0 0 400 50" width="100%" height="50"><polyline fill="none" stroke="#ff5470" stroke-width="2" points="0,40 30,38 60,12 90,10 120,14 150,11 180,13"/><polyline fill="none" stroke="#2fd58a" stroke-width="2" points="180,13 210,36 240,44 270,45 300,44 330,45 360,45 400,44"/><line x1="180" y1="0" x2="180" y2="50" stroke="#8a95ab" stroke-dasharray="3 3"/></svg></div>
+  <div class="row rv" style="--i:7"><span class="pill sp-anchor">Anchor smoke on canary · 5/5 ✓</span><span class="grow"></span><span class="ubtn sm danger">↶ Rollback</span></div>
+</div>`,
+
+`<div class="row ctx-h"><span class="pill sp-arize"><span class="d"></span>Arize</span><b class="h3">Judge · eval + trace</b><span class="grow"></span><span class="ubtn sm">Open trace ↗</span></div>
+<div class="ctx-b">
+  <div class="row rv" style="--i:0;gap:18px" data-spec="Score ring" data-sponsor="arize">
+    <svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="48" fill="none" stroke="#232c40" stroke-width="10"/><circle class="ring-fg" style="--v:.93" cx="60" cy="60" r="48" fill="none" stroke="#8f6bff" stroke-width="10" stroke-linecap="round" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" fill="#e8edf6" font-size="28" font-weight="800">93</text></svg>
+    <div class="col" style="gap:4px"><span class="cap">Fix quality</span><b style="font-size:18px">Excellent: ship it</b><span class="sm muted">LLM-as-judge on the full trace, with rubric v3</span></div>
+  </div>
+  <div class="col" style="gap:8px" data-spec="Rubric bars" data-sponsor="arize">
+    <div class="rv" style="--i:1"><div class="row xs"><span>Correctness</span><span class="grow"></span><span class="mono">0.94</span></div><div class="bar grow-w" style="--i:1"><i style="--w:94%;--c:var(--arize)"></i></div></div>
+    <div class="rv" style="--i:2"><div class="row xs"><span>Minimal diff</span><span class="grow"></span><span class="mono">0.91</span></div><div class="bar grow-w" style="--i:2"><i style="--w:91%;--c:var(--arize)"></i></div></div>
+    <div class="rv" style="--i:3"><div class="row xs"><span>Test coverage</span><span class="grow"></span><span class="mono">0.88</span></div><div class="bar grow-w" style="--i:3"><i style="--w:88%;--c:var(--arize)"></i></div></div>
+    <div class="rv" style="--i:4"><div class="row xs"><span>Safety</span><span class="grow"></span><span class="mono">1.00</span></div><div class="bar grow-w" style="--i:4"><i style="--w:100%;--c:var(--ok)"></i></div></div>
+  </div>
+  <div class="panel rv" style="--i:5;padding:10px 12px" data-spec="Trace waterfall" data-sponsor="arize">
+    <div class="cap" style="font-size:9.5px;margin-bottom:6px">trace 7f3a… · 38.1s</div>
+    <div class="col xs mono" style="gap:4px">
+      <div class="row"><span style="width:70px">detect</span><div class="grow" style="position:relative;height:8px"><i style="position:absolute;left:0;width:6%;height:100%;background:var(--anchor);border-radius:4px"></i></div></div>
+      <div class="row"><span style="width:70px">recall</span><div class="grow" style="position:relative;height:8px"><i style="position:absolute;left:6%;width:2%;height:100%;background:var(--surreal);border-radius:4px"></i></div></div>
+      <div class="row"><span style="width:70px">reproduce</span><div class="grow" style="position:relative;height:8px"><i style="position:absolute;left:8%;width:30%;height:100%;background:var(--daytona);border-radius:4px"></i></div></div>
+      <div class="row"><span style="width:70px">patch</span><div class="grow" style="position:relative;height:8px"><i style="position:absolute;left:38%;width:16%;height:100%;background:var(--aws);border-radius:4px"></i></div></div>
+      <div class="row"><span style="width:70px">verify</span><div class="grow" style="position:relative;height:8px"><i style="position:absolute;left:54%;width:22%;height:100%;background:var(--daytona);border-radius:4px"></i></div></div>
+      <div class="row"><span style="width:70px">deploy</span><div class="grow" style="position:relative;height:8px"><i style="position:absolute;left:76%;width:24%;height:100%;background:var(--aws);border-radius:4px"></i></div></div>
+    </div>
+  </div>
+</div>`
+];
+
+const STEP_COLORS = ['var(--anchor)','var(--surreal)','var(--daytona)','var(--aws)','var(--aws)','var(--arize)'];
+document.querySelectorAll('.ctxframe').forEach((f) => {
+  const i = +f.dataset.stage;
+  f.innerHTML = `<div style="height:4px;background:${STEP_COLORS[i]}"></div>` + CTX[i];
+  f.dataset.sponsor = ['anchor','surreal','daytona','aws','aws','arize'][i];
+});
+document.getElementById('liveCtx').innerHTML = CTX[0];
+
+/* ---------- shared sidebar ---------- */
+const NAV = [['◉','Live'],['☰','Incidents'],['⬡','Memory'],['◔','Quality'],['↻','Flows'],['⚙','Settings']];
+document.querySelectorAll('[data-nav]').forEach((el) => {
+  el.innerHTML = `<div class="row" style="padding:4px 10px 18px"><div class="logo-mark"></div><b>HealOps</b></div>` +
+    NAV.map(([i, n]) => `<a class="${n === el.dataset.nav ? 'on' : ''}"><i>${i}</i>${n}${n === 'Incidents' ? '<span class="pill st-warn" style="margin-left:auto">2</span>' : ''}</a>`).join('') +
+    `<span style="flex:1"></span><div class="panel" style="padding:12px;font-size:12px"><span class="pill sp-anchor" style="margin-bottom:6px">● Patrolling</span><br>5 flows · every 5 min<br><span class="muted">next run in 02:41</span></div>`;
+});
+
+/* ---------- memory graph (deterministic layout) ---------- */
+(function bigGraph() {
+  const W = 760, H = 380;
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  const files = [['checkout.ts', 380, 190], ['cart.ts', 200, 110], ['auth.ts', 600, 110], ['nav.tsx', 180, 290], ['search.ts', 600, 290]];
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">`;
+  let edges = '', nodes = '';
+  files.forEach(([name, fx, fy], fi) => {
+    const nb = [7, 4, 3, 5, 2][fi];
+    for (let b = 0; b < nb; b++) {
+      const a = (b / nb) * Math.PI * 2 + fi, r = 70 + rnd() * 30;
+      const bx = fx + Math.cos(a) * r, by = fy + Math.sin(a) * r * 0.75;
+      const ax = bx + Math.cos(a) * 34, ay = by + Math.sin(a) * 26;
+      edges += `<line x1="${fx}" y1="${fy}" x2="${bx}" y2="${by}" stroke="#3ea6ff44"/><line x1="${bx}" y1="${by}" x2="${ax}" y2="${ay}" stroke="#2fd58a55"/>`;
+      nodes += `<circle class="node-n" cx="${bx}" cy="${by}" r="7" fill="#ff5470" style="color:#ff5470"/><circle class="node-n" cx="${ax}" cy="${ay}" r="5" fill="#2fd58a" style="color:#2fd58a"/>`;
+    }
+    nodes += `<rect x="${fx - 44}" y="${fy - 13}" width="88" height="26" rx="7" fill="#121826" stroke="#3ea6ff"/><text x="${fx}" y="${fy + 4}" text-anchor="middle" font-size="11" fill="#3ea6ff" font-family="JetBrains Mono">${name}</text>`;
+  });
+  edges += `<line x1="380" y1="190" x2="200" y2="110" stroke="#ff00a066" stroke-dasharray="4 4"/><line x1="380" y1="190" x2="180" y2="290" stroke="#ff00a066" stroke-dasharray="4 4"/>`;
+  nodes += `<path d="M380 30l10 10-10 10-10-10z" fill="#3ea6ff"/><text x="396" y="44" font-size="11" fill="#8a95ab">flow: checkout</text><line x1="380" y1="50" x2="380" y2="177" stroke="#3ea6ff66"/>`;
+  document.getElementById('bigGraph').innerHTML = svg + edges + nodes + '</svg>';
+})();
+
+/* hotspots */
+document.getElementById('hotspots').innerHTML = [['checkout.ts', 7], ['nav.tsx', 5], ['cart.ts', 4], ['auth.ts', 3], ['search.ts', 2]]
+  .map(([f, n]) => `<div><div class="row sm"><span class="mono">${f}</span><span class="grow"></span><b>${n}</b></div><div class="bar"><i style="--w:${n / 7 * 100}%;--c:var(--surreal)"></i></div></div>`).join('');
+
+/* trend + bars */
+(function charts() {
+  const q = [3.1, 3.4, 3.3, 3.7, 3.6, 3.9, 4.0, 3.8, 4.2, 4.3, 4.2, 4.5, 4.4, 4.6];
+  const pts = q.map((v, i) => `${20 + i * 46},${120 - (v - 2.5) * 45}`).join(' ');
+  document.getElementById('trend').innerHTML =
+    [0, 1, 2].map((g) => `<line x1="20" x2="620" y1="${120 - g * 45}" y2="${120 - g * 45}" stroke="#232c40"/>`).join('') +
+    `<polygon points="20,120 ${pts} 618,120" fill="#8f6bff22"/><polyline points="${pts}" fill="none" stroke="#8f6bff" stroke-width="3"/>` +
+    q.map((v, i) => `<circle cx="${20 + i * 46}" cy="${120 - (v - 2.5) * 45}" r="3.5" fill="#8f6bff"/>`).join('') +
+    `<text x="618" y="${120 - 2.1 * 45 - 10}" text-anchor="end" fill="#e8edf6" font-size="12" font-weight="700">4.6</text>`;
+  const t = [120, 95, 140, 80, 66, 72, 58, 61, 49, 52, 44, 47, 41, 38, 40, 36];
+  document.getElementById('bars').innerHTML = t.map((v, i) =>
+    `<rect x="${20 + i * 38}" y="${125 - v * 0.8}" width="24" height="${v * 0.8}" rx="4" fill="${i > 11 ? '#2fd58a' : '#2fd58a77'}"/>`).join('') +
+    `<line x1="20" x2="620" y1="${125 - 60 * 0.8}" y2="${125 - 60 * 0.8}" stroke="#ffb547" stroke-dasharray="4 4"/><text x="620" y="${125 - 60 * .8 - 6}" text-anchor="end" font-size="11" fill="#ffb547">60s target</text>`;
+})();
+
+/* incidents table + timeline */
+(function inbox() {
+  const rows = [
+    ['#212', 'Checkout fails: cart.total undefined', 'HEALED', 'ok', 'Anchor patrol', 'checkout', '38s', 93, '#118 ✓'],
+    ['#211', 'Pay button blocked by overlay (iOS)', 'HEALED', 'ok', 'User flag 🐞', 'checkout', '61s', 89, '#97 ✓'],
+    ['#210', 'Search returns stale results', 'NEEDS REVIEW', 'info', 'Anchor patrol', 'search', 'n/a', 71, 'none'],
+    ['#209', 'Signup email validation rejects "+"', 'HEALED', 'ok', 'User flag 🐞', 'signup', '44s', 95, 'none'],
+    ['#208', 'Migration 0042 slowed p95 in 1b', 'ROLLED BACK', 'warn', 'AWS alarm', 'checkout', '22s', 88, '#160 ✓'],
+    ['#207', 'Suspicious instructions in flag text', 'QUARANTINED', 'bad', 'Guardrails', 'n/a', 'n/a', 100, 'pattern ✓'],
+    ['#206', 'Login redirect loop on Safari', 'HEALED', 'ok', 'Anchor patrol', 'login', '52s', 90, '#140 ✓'],
+    ['#205', 'Cart badge not updating', 'HEALED', 'ok', 'Anchor patrol', 'cart', '35s', 92, '#131 ✓']
+  ];
+  document.querySelector('#incTable tbody').innerHTML = rows.map((r, i) => `<tr class="${i ? '' : 'sel'}">
+    <td><span class="mono dim">${r[0]}</span> <b>${r[1]}</b></td><td><span class="pill st-${r[3]}">${r[2]}</span></td>
+    <td class="sm">${r[4]}</td><td class="mono sm">${r[5]}</td><td class="mono">${r[6]}</td>
+    <td><span class="mono" style="color:var(--arize)">${r[7]}</span></td><td class="sm" style="color:var(--surreal)">${r[8]}</td></tr>`).join('');
+  const tl = [['anchor', '00:00', 'Patrol failed at step 4', 'Recording ↗'], ['surreal', '00:02', 'Matched bug #118 (0.87)', 'Graph ↗'],
+    ['daytona', '00:03', 'Reproduced in sb_9f2c', 'Sandbox ↗'], ['aws', '00:14', 'Patch generated (+2 −1)', 'PR #241 ↗'],
+    ['daytona', '00:20', 'Suite green 42/42', 'Logs ↗'], ['aws', '00:29', 'Canary → 100%', 'Console ↗'], ['arize', '00:38', 'Judged 93/100', 'Trace ↗']];
+  document.getElementById('timeline').innerHTML = tl.map(([sp, t, txt, link], i) => `
+    <div class="row" style="align-items:stretch;gap:12px"><div style="display:flex;flex-direction:column;align-items:center">
+      <span style="width:12px;height:12px;border-radius:50%;background:var(--${sp});margin-top:4px"></span>${i < tl.length - 1 ? '<span style="flex:1;width:2px;background:var(--line)"></span>' : ''}</div>
+      <div style="padding-bottom:16px;flex:1"><div class="row"><span class="mono xs dim">${t}</span><span class="pill sp-${sp}" style="font-size:9.5px">${sp.toUpperCase()}</span><span class="grow"></span><span class="xs info">${link}</span></div><div class="sm" style="margin-top:2px">${txt}</div></div></div>`).join('');
+})();
+
+/* flows + integrations */
+(function settings() {
+  const flows = [['checkout', '5 min', '1111111111111111110 1', '2.4s'], ['signup', '5 min', '11111111111111111111', '1.8s'], ['login', '5 min', '11111111101111111111', '1.1s'], ['search', '15 min', '11111111111111100011', '0.9s'], ['password reset', '1 hour', '11111111111111111111', '3.2s']];
+  document.querySelector('#flowTable tbody').innerHTML = flows.map(([n, s, runs, p]) => `<tr><td><b>${n}</b><div class="xs muted">${n === 'checkout' ? '5 steps · 4 assertions' : '3–4 steps'}</div></td><td class="mono sm">${s}</td>
+    <td><div class="row" style="gap:2px">${runs.replace(/ /g, '').split('').map((c) => `<i style="width:7px;height:20px;border-radius:2px;background:${c === '1' ? '#2fd58a' : '#ff5470'}"></i>`).join('')}</div></td><td class="mono sm">${p}</td><td><span class="ubtn sm">Run now</span></td></tr>`).join('');
+  const integ = [['anchor', 'Anchor Browser', 'Connected', 'Live view on · stealth on · 5 concurrent sessions'], ['daytona', 'Daytona', 'Connected', 'Image node:20 · auto-stop 15 min · no prod secrets'],
+    ['aws', 'AWS Bedrock', 'Connected', 'us-east-1 · Claude on Bedrock · Guardrail gr-qa-01'], ['surreal', 'SurrealDB', 'Connected', 'ns qa / db agent · LIVE queries on · HNSW index'], ['arize', 'Arize', 'Connected', 'OTel exporter · project healops · eval rubric v3']];
+  document.getElementById('integrations').innerHTML = integ.map(([k, n, s, d]) => `<div class="panel" style="padding:12px 14px;border-left:3px solid var(--${k})">
+    <div class="row"><b>${n}</b><span class="grow"></span><span class="pill st-ok"><span class="d"></span>${s}</span></div><div class="xs muted mono" style="margin-top:4px">${d}</div></div>`).join('');
+})();
+</script>
+<script src="figma.js"></script>
+<script>
+/* ---------- play-mode animations ---------- */
+const REASON = [
+  'Anchor flow "checkout" failed at step 4. Pay now does nothing. Retried 3×, so it is not flaky. Opening incident #212.',
+  'Searching memory… bug #118 matches with 0.87 similarity. It was fixed with a null guard + skeleton. Using that as a prior.',
+  'Spinning up Daytona sandbox sb_9f2c at commit a41c9e. Running checkout.spec.ts. Reproduced: same TypeError at checkout.ts:42.',
+  'Cart is undefined when the discount applies before the cart loads. Patch: guard + nullish default. Re-running the suite… 42/42 green.',
+  'Risk 31 (low), so auto-approved by policy. Canary 5% → 25% → 100% across 3 AZs. Anchor smoke tests pass on the canary.',
+  'Arize judge: correctness 0.94, minimal 0.91, safety 1.00, overall 93. Writing bug→fix edge to SurrealDB. Incident closed in 38s.'
+];
+
+Fig.on('01 · Live Incident (Mission Control)', (frame) => {
+  const $ = (s) => frame.querySelector(s);
+  const steps = [...frame.querySelectorAll('#liveSteps .st6')];
+  const ctx = $('#liveCtx'), reason = $('#reason'), buy = $('#buyBtn'), cur = $('#acur');
+  let t0 = Date.now(), typer, clock = setInterval(() => {
+    const s = Math.min(38, Math.floor((Date.now() - t0) / 450));
+    $('#timer').textContent = '00:' + String(s).padStart(2, '0');
+  }, 100);
+  function type(text) {
+    clearInterval(typer); let i = 0;
+    typer = setInterval(() => { reason.innerHTML = text.slice(0, i += 3).replace(/</g, '&lt;') + '<span class="cur"></span>'; if (i >= text.length) clearInterval(typer); }, 18);
+  }
+  function stage(n) {
+    steps.forEach((s, i) => { s.classList.toggle('active', i === n); s.classList.toggle('done', i < n); });
+    ctx.classList.remove('reveal'); ctx.innerHTML = CTX[n]; void ctx.offsetWidth; ctx.classList.add('reveal');
+    ctx.style.borderColor = STEP_COLORS[n];
+    type(REASON[n]);
+    $('#mirror').classList.toggle('show', n === 2 || n === 3);
+    if (n === 0) {
+      t0 = Date.now();
+      $('#okBanner').classList.remove('show'); buy.className = 'cta-buy'; buy.textContent = 'Pay now';
+      $('#verTag').textContent = 'v1.4.2'; $('#sevPill').textContent = 'SEV-2 · HEALING'; $('#sevPill').className = 'pill solid st-bad';
+      cur.style.left = (buy.offsetLeft + 40) + 'px'; cur.style.top = (buy.offsetTop + 18) + 'px';
+      setTimeout(() => { buy.className = 'cta-buy broken'; $('#errBanner').classList.add('show'); }, 1100);
+    }
+    if (n === 4) {
+      $('#errBanner').classList.remove('show'); $('#okBanner').classList.add('show');
+      buy.className = 'cta-buy fixed'; buy.textContent = 'Pay now ✓'; $('#verTag').textContent = 'v1.4.3';
+    }
+    if (n === 5) { $('#sevPill').textContent = 'HEALED · 38s'; $('#sevPill').className = 'pill solid st-ok'; cur.style.left = '80%'; cur.style.top = '30%'; }
+  }
+  const stop = Fig.loop([0, 1, 2, 3, 4, 5].map((n) => [() => stage(n), n === 5 ? 4200 : 2800]));
+  return () => { stop(); clearInterval(typer); clearInterval(clock); };
+});
+
+document.querySelectorAll('.ctxframe').forEach((f) => {
+  Fig.on(f.dataset.name, (frame) => Fig.loop([[() => { frame.classList.remove('reveal'); void frame.offsetWidth; frame.classList.add('reveal'); }, 4200]]));
+});
+
+Fig.on('03 · Memory & Quality Dashboard', (frame) => {
+  const nodes = [...frame.querySelectorAll('.node-n')];
+  return Fig.loop([[() => { nodes.forEach((n) => n.classList.toggle('hot', Math.random() < 0.12)); }, 700]]);
+});
+
+Fig.on('05 · Flag-to-Fix Widget (end user, mobile)', (frame) => {
+  const b = frame.querySelector('#phoneB'), c = frame.querySelector('#phoneC');
+  return Fig.loop([
+    [() => { b.classList.remove('reveal'); c.classList.remove('reveal'); void b.offsetWidth; b.classList.add('reveal'); }, 1800],
+    [() => c.classList.add('reveal'), 3000]
+  ]);
+});
+</script>
+</body>
+</html>

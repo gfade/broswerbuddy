@@ -563,15 +563,16 @@ async function openEmbedded(cfg: HealOpsConfig, ns: string, dbName: string): Pro
   // Loaded here, not at module top, so a missing native addon only disables this provider.
   const { createNodeEngines, engineVersion } = await import('@surrealdb/node');
   const kvDir = path.join(cfg.dataDir, 'surreal');
-  const rocksDir = path.join(cfg.dataDir, 'surreal-rocksdb');
 
-  // SurrealKV first; RocksDB and then memory are fallbacks. The memory fallback is not persisted.
+  // The persistent store is SurrealKV. If it cannot be opened, for example because another process
+  // holds its lock, the engine's in-process memory mode is used instead, with a warning. RocksDB is
+  // deliberately not a fallback: it would open a different, empty, persistent store, and later runs
+  // would then split their data between the two.
   // An absolute path goes right after the scheme with no "//": "surrealkv:C:/x" is the absolute
   // path C:/x, but "surrealkv://C:/x" is read as host "C" and resolves relative to the working
   // directory, which silently puts the store somewhere else.
   const attempts = [
     { engine: 'surrealkv', url: `surrealkv:${toUrlPath(kvDir)}`, location: kvDir, persistent: true },
-    { engine: 'rocksdb', url: `rocksdb:${toUrlPath(rocksDir)}`, location: rocksDir, persistent: true },
     { engine: 'mem', url: 'mem://', location: 'memory', persistent: false },
   ];
 

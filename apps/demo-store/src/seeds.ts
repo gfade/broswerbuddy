@@ -79,6 +79,28 @@ export const seeds: BugSeed[] = [
       ],
     },
   },
+  {
+    id: 'search-xss',
+    title: 'Search box runs HTML from the query (XSS)',
+    flowId: 'search',
+    description:
+      'The no-results message echoes the search query through innerHTML, so a query such as ' +
+      '<img src=x onerror=...> runs script in the shopper\'s page: a reflected XSS, the kind of bug that gets a CVE. ' +
+      'Searching for normal text still works.',
+    buggyFiles: [variant('search-xss', 'js/app.js')],
+    offlineFix: {
+      summary: 'Render the search query as text, not HTML',
+      rootCause:
+        'applySearch writes the raw query into noResults.innerHTML, so any HTML in the query is parsed and its event handlers run (reflected XSS).',
+      edits: [
+        {
+          path: 'js/app.js',
+          find: '  // echo the query back, highlighted\n  noResults.innerHTML = `No products match "<b>${searchInput.value.trim()}</b>".`;',
+          replace: '  noResults.textContent = `No products match "${searchInput.value.trim()}".`;',
+        },
+      ],
+    },
+  },
 ];
 
 export const DEFAULT_SEED = 'checkout-discount';

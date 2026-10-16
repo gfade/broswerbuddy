@@ -115,6 +115,7 @@ function applySearch() {
     card.hidden = !show;
     if (show) matches += 1;
   }
+  noResults.textContent = `No products match "${searchInput.value.trim()}".`;
   noResults.hidden = matches > 0;
 }
 

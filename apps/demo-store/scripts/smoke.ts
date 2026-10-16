@@ -318,7 +318,11 @@ async function main(): Promise<number> {
   let browser: Browser | undefined;
   try {
     await server.listen();
-    browser = await chromium.launch({ headless: true });
+    // fall back to a preinstalled Chromium when Playwright's own build is missing (see packages/anchor/src/local.ts)
+    const executablePath =
+      process.env.HEALOPS_CHROMIUM_PATH ||
+      (fs.existsSync(chromium.executablePath()) ? undefined : ['/opt/pw-browsers/chromium'].find((p) => fs.existsSync(p)));
+    browser = await chromium.launch({ headless: true, executablePath });
     await runChecks(browser, server, sandboxDir);
   } catch (err) {
     record('smoke', 'run', 'no exception', errorMessage(err), false);

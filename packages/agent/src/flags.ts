@@ -13,6 +13,7 @@ export function chooseFlows(note: string, url: string, flows: FlowDefinition[]):
     if (f && !picked.includes(f)) picked.push(f);
   };
 
+  if (/search|xss|cve|inject|script|html|security/.test(text)) add(byId('search'));
   if (/sign[\s-]?up|register|account/.test(text)) add(byId('signup'));
   if (/cart|add[\s-]?to|basket|add\b/.test(text)) add(byId('add-to-cart'));
   if (/pay|checkout|discount|total|coupon|price/.test(text)) add(byId('checkout'));

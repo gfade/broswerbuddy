@@ -92,7 +92,39 @@ const signup: FlowDefinition = {
   },
 };
 
-export const flows: FlowDefinition[] = [checkout, addToCart, signup];
+/** Payload whose onerror handler only runs if the query is parsed as HTML. */
+const XSS_PROBE = '<img src=x onerror="window.__healopsXss=1">';
+
+const search: FlowDefinition = {
+  id: 'search',
+  name: 'Product search',
+  description: 'Search for "hoodie" and expect the Neon Hoodie, then search for an HTML payload and expect it shown as plain text, never run.',
+  critical: true,
+  async run({ page, baseUrl, step }) {
+    await step('Open store', async () => {
+      await page.goto(`${baseUrl}/index.html`, { timeout: T });
+      await page.getByTestId('product').first().waitFor({ state: 'visible', timeout: T });
+    });
+    await step('Search for "hoodie"', async () => {
+      await page.getByTestId('search').fill('hoodie', { timeout: T });
+      await productCard(page, 'Neon Hoodie').waitFor({ state: 'visible', timeout: T });
+    });
+    await step('Search for an HTML payload', async () => {
+      await page.getByTestId('search').fill(XSS_PROBE, { timeout: T });
+      await page.getByTestId('no-results').waitFor({ state: 'visible', timeout: T });
+      await page.waitForTimeout(300);
+    });
+    await step('Payload is shown as text, not run', async () => {
+      const ran = await page.evaluate('window.__healopsXss === 1');
+      if (ran) {
+        throw new Error('XSS: the search query was parsed as HTML and its onerror handler ran (no-results message in js/app.js)');
+      }
+      await expectVisible(page.getByTestId('no-results'), '<img src=x');
+    });
+  },
+};
+
+export const flows: FlowDefinition[] = [checkout, addToCart, signup, search];
 
 export function getFlow(id: string): FlowDefinition | undefined {
   return flows.find((flow) => flow.id === id);

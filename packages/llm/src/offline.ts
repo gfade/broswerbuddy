@@ -25,8 +25,11 @@ export function heuristicScreen(text: string): ScreenResult {
 
 export function heuristicTriage(input: TriageInput): TriageResult {
   const text = `${input.title} ${input.error} ${input.flowName ?? ''}`.toLowerCase();
-  const severity = /checkout|pay|cart|order/.test(text) ? 'sev1' : /signup|login|auth/.test(text) ? 'sev2' : 'sev3';
-  const category = /typeerror|undefined|null/.test(text)
+  const security = /xss|cve|inject|onerror|security/.test(text);
+  const severity = security || /checkout|pay|cart|order/.test(text) ? 'sev1' : /signup|login|auth/.test(text) ? 'sev2' : 'sev3';
+  const category = security
+    ? 'security (xss)'
+    : /typeerror|undefined|null/.test(text)
     ? 'null reference'
     : /valid|regex|email/.test(text)
       ? 'validation'

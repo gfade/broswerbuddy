@@ -30,7 +30,8 @@ async function propose(h: Heal): Promise<PatchProposal> {
     similarFixes: h.similarFixes,
     previousAttempts: h.previousAttempts,
     userReport: h.rec.userReport,
-    offlineHint: llm.provider === 'offline' ? seed?.offlineFix : undefined,
+    // never shown to the model: used offline, and as the fallback if a live patch call fails (e.g. expired creds)
+    offlineHint: seed?.offlineFix,
   };
   const model = llm.models.patch;
   const delta = (kind: 'thinking' | 'text') => (text: string) =>

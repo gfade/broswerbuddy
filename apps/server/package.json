@@ -11,6 +11,13 @@
   "dependencies": {
     "ws": "latest",
     "@healops/shared": "*",
-    "@healops/agent": "*"
+    "@healops/agent": "*",
+    "@healops/llm": "*",
+    "@healops/anchor": "*",
+    "@healops/daytona": "*",
+    "@healops/memory": "*",
+    "@healops/telemetry": "*",
+    "@healops/deploy": "*",
+    "@healops/demo-store": "*"
   }
 }

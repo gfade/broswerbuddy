@@ -73,6 +73,11 @@ export function layoutGraph(nodes: GraphNode[], edges: GraphEdge[]): Map<string,
       dx[j] += (ax / d) * f;
       dy[j] += (ay / d) * f;
     }
+    // gravity: keeps disconnected nodes (e.g. lone incidents) off the walls
+    for (let i = 0; i < n; i++) {
+      dx[i] += (W / 2 - coords[i].x) * 0.25;
+      dy[i] += (H / 2 - coords[i].y) * 0.4;
+    }
     for (let i = 0; i < n; i++) {
       const mag = Math.sqrt(dx[i] * dx[i] + dy[i] * dy[i]) || 0.01;
       const step = Math.min(mag, temp);
@@ -216,7 +221,7 @@ function drawGraph(host: HTMLElement, graph: MemoryGraph, opts: GraphOptions, wi
       { value: NODE_STYLE[node.type].label, label: 'type', css: NODE_STYLE[node.type].css },
       { value: String(degree), label: degree === 1 ? 'link' : 'links' },
     ];
-    if (typeof node.data?.score === 'number') rows.push({ value: (node.data.score as number).toFixed(1), label: 'judge score (of 5)', css: undefined });
+    if (typeof node.data?.score === 'number') rows.push({ value: String(Math.round(node.data.score as number)), label: 'judge score (of 100)', css: undefined });
     tip.show(p.x, p.y, node.label, rows);
   };
 

@@ -261,6 +261,9 @@ class Runtime implements HealOpsRuntime, Hub {
       await deploy(h, applied, () => this.nextVersion());
       await judge(h, proposal, applied);
       await learn(h, proposal, applied);
+      // prove the fix on the live store, and record the green run in the flow's history
+      const live = await soft('live re-check', () => this.execFlow(h.flow!, 'smoke', rec.id, this.liveUrl()));
+      if (live) this.record(live.flowId, live);
     } catch (err) {
       outcome = err instanceof Closed ? err : err instanceof Error ? err : new Error(errorMessage(err));
     }

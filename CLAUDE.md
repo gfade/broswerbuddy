@@ -15,10 +15,10 @@ Sponsors, one per stage: **Anchor Browser** (detect), **AWS Bedrock / Claude** (
 | apps/widget | 🐞 flag-a-bug widget → `dist/healops.js` | ✅ done |
 | packages/anchor | `createBrowserRunner()`: Anchor sessions over CDP + local Chromium fallback; sets the Daytona preview header | ✅ done (36/36 smoke, live Anchor session ~2s create) |
 | packages/daytona | `createSandboxProvider()`: Daytona sandboxes (public preview, default snapshot has Node 25) + local fallback | ✅ done (live: create 1.6s; preview warning confirmed, header bypass works) |
-| packages/memory | `createMemory()`, `seedHistory()`, `hashEmbed()`: SurrealDB (cloud or embedded `@surrealdb/node`) + in-memory fallback | ⏳ verify |
-| packages/agent | `createRuntime(deps)`: the orchestrator (implements `HealOpsRuntime`) | ⏳ verify |
-| apps/server | HTTP `/api/*` + WebSocket `/ws` + static hosting; `HEALOPS_FAKE=1` fake runtime | ⏳ verify |
-| apps/dashboard | Vite + vanilla TS mission control (`?demo=1` plays a scripted incident) | ⏳ verify |
+| packages/memory | `createMemory()`, `seedHistory()`, `hashEmbed()`: SurrealDB (cloud or embedded `@surrealdb/node`) + in-memory fallback | ✅ done (38/38 smoke) |
+| packages/agent | `createRuntime(deps)`: the orchestrator (implements `HealOpsRuntime`); stages in intake/reproduce/patch/release.ts | ✅ done (e2e HEALED on all 3 seeds) |
+| apps/server | HTTP `/api/*` + WebSocket `/ws` + static hosting; `HEALOPS_FAKE=1` fake runtime; `wire.ts` = real adapters | ✅ done (66/66 smoke) |
+| apps/dashboard | Vite + vanilla TS mission control (`src/main.ts` shell; Live/Incidents/Memory/Flows; `?demo=1` plays a scripted incident) | ✅ done |
 | scripts/ | `import-apis.mjs`, `e2e.ts` (needs wire.ts), `doctor.ts` (`npm run doctor`: 11/15 pass; the fails are the expected Haiku 403 and no Surreal Cloud instance), `tunnel.mjs` (`npm run tunnel`) | ✅ |
 
 Design reference for the UI: `docs/design/frontend.html`, `docs/design/backend.html` (Figma-style boards; open in a browser).
@@ -27,12 +27,13 @@ Design reference for the UI: `docs/design/frontend.html`, `docs/design/backend.h
 ```bash
 npx tsc -p <package dir>               # must be 0 errors
 npx tsx <package>/scripts/smoke.ts     # each package has a smoke test (widget: node apps/widget/scripts/smoke.mjs)
-npx tsx packages/agent/scripts/simulate.ts   # orchestrator with fakes
+npx tsx scripts/e2e.ts checkout-discount     # orchestrator end to end (HEALOPS_LLM_PROVIDER=offline for no LLM)
 ```
 
 ## Remaining work (in order)
-1. Check that every ⏳ package typechecks and its smoke test passes; fix what doesn't.
-2. Replace the placeholder `apps/server/src/wire.ts` with the real wiring:
+Steps 1-4 and the README are done (2026-10-16). Left: step 5 (public reachability, needs a user decision) and live-key testing.
+1. ~~Check that every ⏳ package typechecks and its smoke test passes; fix what doesn't.~~
+2. ~~Replace the placeholder `apps/server/src/wire.ts` with the real wiring:
 ```ts
 import { loadConfig, type HealOpsRuntime } from '@healops/shared';
 import { createLLM } from '@healops/llm';
@@ -57,7 +58,7 @@ export async function createHealOps(): Promise<HealOpsRuntime> {
   });
 }
 ```
-   Then add the adapter packages to `apps/server/package.json` dependencies (`"@healops/llm": "*"`, …).
+   Then add the adapter packages to `apps/server/package.json` dependencies (`"@healops/llm": "*"`, …).~~
 3. `npx tsx scripts/e2e.ts checkout-discount` must end with **HEALED** and the re-check flow passing (also try `signup-plus-email` and `cart-overlay`).
 4. `npm run build` (widget + dashboard), then `npm run dev`: the dashboard runs on :5173, the API on :8787, and the store on :4000. Click "Break it again", then "Run checkout now", and watch it heal.
 5. Public reachability for Anchor's cloud browser. Either run `npm run tunnel -- --write-env` (cloudflared), or host the store on S3: `provisionS3Site()` + `HEALOPS_S3_BUCKET`. Creating AWS resources is the user's decision, so ask first.
@@ -69,6 +70,8 @@ export async function createHealOps(): Promise<HealOpsRuntime> {
 - **SurrealDB:** `SURREAL_CLOUD_TOKEN` (sdbp_…) is a read-only control-plane token, never a DB credential. The org has no instance, so memory runs on the embedded engine (`.healops/surreal`). To use the cloud, create an instance and set `SURREAL_URL`, `SURREAL_USER` and `SURREAL_PASS`.
 - **Arize:** space "Default Space", ID `U3BhY2U6NTY4OTY6RGpuSQ==`, project `healops`. OTLP endpoint `https://otlp.arize.com/v1/traces` with headers `space_id` + `api_key`.
 - **Daytona:** preview links show a warning page to browsers unless the request carries the header `X-Daytona-Skip-Preview-Warning: true`. The browser runner must set it.
+- **Chromium:** if Playwright's own build is missing (e.g. Claude Code cloud ships `/opt/pw-browsers/chromium`), the local runner uses that; override with `HEALOPS_CHROMIUM_PATH`.
+- **A failed live patch call** (expired creds, 403) falls back to the seed's reference fix (`offlineHint`, never shown to the model), so the demo still heals.
 - **Anchor's cloud browser can't reach localhost.** Patrols against a local store fall back to local Chromium unless `HEALOPS_PUBLIC_STORE_URL` is set.
 - Claude API rules used: the patch call streams with `thinking: {type:'adaptive', display:'summarized'}` and `output_config: {effort:'high', format: betaZodOutputFormat(...)}`. Fast calls use `messages.parse` + `zodOutputFormat`. No prefill, no forced tool_choice. The first-party API uses `fallbacks:'default'`; Bedrock retries a refusal on Opus 4.8.
 

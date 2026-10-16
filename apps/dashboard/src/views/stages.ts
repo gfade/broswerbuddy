@@ -96,7 +96,7 @@ function recallBody(inc: IncidentView): string {
   const seen =
     top.similarity >= 0.8 && top.fixSummary
       ? `<div class="seen"><div class="row-gap">${pill('SEEN BEFORE', 'var(--surreal)', undefined, true)}<b class="mono">bug ${esc(top.bugId)}</b><span class="grow"></span><span class="mono">${top.similarity.toFixed(2)} match</span></div>
-         <p class="sm">Fixed before by: <b>${esc(top.fixSummary)}</b>${top.score !== undefined ? ` · judge ${top.score.toFixed(1)} of 5` : ''}</p></div>`
+         <p class="sm">Fixed before by: <b>${esc(top.fixSummary)}</b>${top.score !== undefined ? ` · judge ${Math.round(top.score)}/100` : ''}</p></div>`
       : '';
   const rows = m.matches
     .map((x) => `<div class="match"><div class="bar-row"><div class="bar-row-h"><span>bug ${esc(x.bugId)} · ${esc(x.signature)}</span><span class="mono">${x.similarity.toFixed(2)}</span></div><div class="bar" role="img" aria-label="similarity ${x.similarity.toFixed(2)}"><i style="--w:${(Math.max(0, Math.min(1, x.similarity)) * 100).toFixed(1)}%;--c:var(--surreal)"></i></div></div></div>`)
